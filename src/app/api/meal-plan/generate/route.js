@@ -1,8 +1,4 @@
-import { auth } from '@/lib/auth/auth';
 import { headers } from 'next/headers';
-import { db } from '@/lib/db/index';
-import { children, measurements, mealPlans } from '@/lib/db/schema';
-import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateRandomMenu } from '@/lib/nutrition/meal-generator';
 
@@ -22,6 +18,12 @@ export async function POST(request) {
     const mealPlan = generateRandomMenu(targetCalories, status || 'Normal', currentFoodNames);
 
     if (measurementId) {
+      // Dynamically import database and auth dependencies
+      const { auth } = await import('@/lib/auth/auth');
+      const { db } = await import('@/lib/db/index');
+      const { children, measurements, mealPlans } = await import('@/lib/db/schema');
+      const { and, eq } = await import('drizzle-orm');
+
       // 1. Get current session
       const session = await auth.api.getSession({
         headers: await headers(),
@@ -86,4 +88,3 @@ export async function POST(request) {
     );
   }
 }
-
