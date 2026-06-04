@@ -75,12 +75,14 @@ export default function CalculatorPage() {
   const handleRefreshMenu = async () => {
     if (!result) return;
     try {
+      const currentFoodNames = result.mealPlan.map(meal => meal.foodName);
       const res = await fetch('/api/meal-plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           targetCalories: result.recommendedCalories,
           status: result.overallStatus,
+          currentFoodNames,
         }),
       });
       const json = await res.json();

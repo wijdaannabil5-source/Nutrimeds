@@ -184,6 +184,7 @@ export default function DashboardPage() {
   const handleRefreshMenu = async () => {
     if (!activeMeasurement) return;
     try {
+      const currentFoodNames = mealPlan.map(meal => meal.foodName);
       const res = await fetch('/api/meal-plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,6 +192,7 @@ export default function DashboardPage() {
           targetCalories: activeMeasurement.recommendedCalories,
           status: activeMeasurement.nutritionStatus,
           measurementId: activeMeasurement.id,
+          currentFoodNames,
         }),
       });
       const json = await res.json();

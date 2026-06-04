@@ -280,16 +280,24 @@ export function generateDailyMenu(targetCalories, status = 'Normal') {
 /**
  * Generate a randomized meal plan (for "refresh" functionality).
  */
-export function generateRandomMenu(targetCalories, status = 'Normal') {
+export function generateRandomMenu(targetCalories, status = 'Normal', currentFoodNames = []) {
   const distribution = { sarapan: 0.25, makan_siang: 0.30, makan_malam: 0.25, camilan: 0.20 };
   const mealTypes = ['sarapan', 'makan_siang', 'makan_malam', 'camilan'];
   const plan = [];
 
   for (const mealType of mealTypes) {
     const targetForMeal = targetCalories * distribution[mealType];
-    const options = FOOD_DATABASE.filter(f => f.mealType === mealType);
+    let options = FOOD_DATABASE.filter(f => f.mealType === mealType);
 
-    // Pick a random food
+    // Filter out currently displayed foods to ensure a new selection is made
+    if (currentFoodNames && currentFoodNames.length > 0) {
+      const filteredOptions = options.filter(f => !currentFoodNames.includes(f.foodName));
+      if (filteredOptions.length > 0) {
+        options = filteredOptions;
+      }
+    }
+
+    // Pick a random food from remaining options
     const randomIndex = Math.floor(Math.random() * options.length);
     const food = options[randomIndex];
 

@@ -9,7 +9,7 @@ import { generateRandomMenu } from '@/lib/nutrition/meal-generator';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { targetCalories, status, measurementId } = body;
+    const { targetCalories, status, measurementId, currentFoodNames } = body;
 
     if (!targetCalories) {
       return Response.json(
@@ -19,7 +19,7 @@ export async function POST(request) {
     }
 
     // Generate a random meal plan variation
-    const mealPlan = generateRandomMenu(targetCalories, status || 'Normal');
+    const mealPlan = generateRandomMenu(targetCalories, status || 'Normal', currentFoodNames);
 
     if (measurementId) {
       // 1. Get current session
