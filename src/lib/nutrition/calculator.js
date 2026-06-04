@@ -39,8 +39,8 @@ function classifyZScore(zScore, type) {
     // BMI-for-Age
     if (zScore < -3) return 'Gizi Buruk (Sangat Kurus)';
     if (zScore < -2) return 'Kurus';
-    if (zScore > 2) return 'Gemuk';
     if (zScore > 3) return 'Obesitas';
+    if (zScore > 2) return 'Gemuk';
     return 'Normal';
   }
   return 'Normal';

@@ -22,6 +22,29 @@ const MEAL_ICONS = {
   camilan: '🍎',
 };
 
+const getSDRangeLabel = (value, type) => {
+  if (type === 'wfa') {
+    if (value < -3) return 'Z < -3 SD';
+    if (value < -2) return '-3 SD ≤ Z < -2 SD';
+    if (value > 2) return 'Z > 2 SD';
+    return '-2 SD ≤ Z ≤ 2 SD';
+  }
+  if (type === 'hfa') {
+    if (value < -3) return 'Z < -3 SD';
+    if (value < -2) return '-3 SD ≤ Z < -2 SD';
+    if (value > 2) return 'Z > 2 SD';
+    return '-2 SD ≤ Z ≤ 2 SD';
+  }
+  if (type === 'bfa') {
+    if (value < -3) return 'Z < -3 SD';
+    if (value < -2) return '-3 SD ≤ Z < -2 SD';
+    if (value > 3) return 'Z > 3 SD';
+    if (value > 2) return '2 SD < Z ≤ 3 SD';
+    return '-2 SD ≤ Z ≤ 2 SD';
+  }
+  return '';
+};
+
 export default function CalculatorPage() {
   const [form, setForm] = useState({
     name: '',
@@ -309,14 +332,16 @@ export default function CalculatorPage() {
               <h3 className="text-lg font-bold text-slate-900 mb-4">📊 Skor Z-Score WHO</h3>
               <div className="space-y-4">
                 {[
-                  { label: 'Berat / Usia (WFA)', data: result.zScores.weightForAge },
-                  { label: 'Tinggi / Usia (HFA)', data: result.zScores.heightForAge },
-                  { label: 'BMI / Usia (BFA)', data: result.zScores.bmiForAge },
+                  { label: 'Berat / Usia (WFA)', data: result.zScores.weightForAge, type: 'wfa' },
+                  { label: 'Tinggi / Usia (HFA)', data: result.zScores.heightForAge, type: 'hfa' },
+                  { label: 'BMI / Usia (BFA)', data: result.zScores.bmiForAge, type: 'bfa' },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
                     <div>
                       <div className="text-sm font-medium text-slate-700">{item.label}</div>
-                      <div className="text-xs text-slate-500">Z-Score: {item.data.value > 0 ? '+' : ''}{item.data.value}</div>
+                      <div className="text-xs text-slate-500">
+                        Z-Score: {item.data.value > 0 ? '+' : ''}{item.data.value} ({getSDRangeLabel(item.data.value, item.type)})
+                      </div>
                     </div>
                     <div className={`text-lg font-bold text-right ml-4 ${item.data.value < -2 ? 'text-red-600' : item.data.value > 2 ? 'text-amber-600' : 'text-emerald-600'}`}>
                       {item.data.classification}
