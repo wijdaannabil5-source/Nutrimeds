@@ -217,16 +217,14 @@ export default function DashboardPage() {
       const element = document.getElementById('futuristic-pdf-template-dashboard');
       if (!element) throw new Error('Template not found');
 
-      // Unhide the template momentarily for capturing
-      element.style.display = 'block';
+      // Add a slight delay to ensure fonts/SVGs are fully painted
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const dataUrl = await toPng(element, {
         backgroundColor: '#0f172a', // Slate-900
         pixelRatio: 2,
         cacheBust: true,
       });
-
-      element.style.display = 'none';
 
       // Load image to get dimensions
       const img = new Image();
@@ -679,11 +677,11 @@ export default function DashboardPage() {
 
               {/* Hidden Futuristic PDF Template for Dashboard */}
               {activeMeasurement && mealPlan.length > 0 && (
-                <div 
-                  id="futuristic-pdf-template-dashboard" 
-                  className="absolute left-[-9999px] top-0 bg-slate-900 text-white w-[800px] min-h-[1130px] p-10 font-sans shadow-2xl overflow-hidden"
-                  style={{ display: 'none' }}
-                >
+                <div className="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none -z-50">
+                  <div 
+                    id="futuristic-pdf-template-dashboard" 
+                    className="bg-slate-900 text-white w-[800px] h-[1130px] p-10 font-sans shadow-2xl relative overflow-hidden"
+                  >
                   {/* Decorative Glowing Orbs */}
                   <div className="absolute top-[-100px] right-[-100px] w-96 h-96 bg-sky-500/30 rounded-full blur-[100px]"></div>
                   <div className="absolute bottom-[-100px] left-[-100px] w-96 h-96 bg-blue-600/20 rounded-full blur-[100px]"></div>
@@ -779,6 +777,7 @@ export default function DashboardPage() {
                       <p className="mt-1 text-xs">Untuk analisis lebih lanjut, selalu konsultasikan dengan ahli gizi profesional.</p>
                     </div>
                   </div>
+                </div>
                 </div>
               )}
             </>
