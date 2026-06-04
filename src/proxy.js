@@ -17,7 +17,12 @@ export async function proxy(request) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register');
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
-  const isProtectedApi = request.nextUrl.pathname.startsWith('/api/children') || request.nextUrl.pathname.startsWith('/api/measurements') || request.nextUrl.pathname.startsWith('/api/meal-plan');
+  
+  // Protect all API routes except public ones (like /api/calculate and /api/meal-plan/generate)
+  const isProtectedApi = 
+    request.nextUrl.pathname.startsWith('/api/children') || 
+    request.nextUrl.pathname.startsWith('/api/measurements') || 
+    (request.nextUrl.pathname.startsWith('/api/meal-plan') && !request.nextUrl.pathname.startsWith('/api/meal-plan/generate'));
 
   // 2. Redirect logic
   if (!session) {

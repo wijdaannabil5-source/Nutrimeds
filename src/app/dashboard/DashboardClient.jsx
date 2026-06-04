@@ -190,6 +190,7 @@ export default function DashboardPage() {
         body: JSON.stringify({
           targetCalories: activeMeasurement.recommendedCalories,
           status: activeMeasurement.nutritionStatus,
+          measurementId: activeMeasurement.id,
         }),
       });
       const json = await res.json();
