@@ -316,10 +316,10 @@ export default function CalculatorPage() {
                   <div key={item.label} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
                     <div>
                       <div className="text-sm font-medium text-slate-700">{item.label}</div>
-                      <div className="text-xs text-slate-500">{item.data.classification}</div>
+                      <div className="text-xs text-slate-500">Z-Score: {item.data.value > 0 ? '+' : ''}{item.data.value}</div>
                     </div>
-                    <div className={`text-lg font-bold ${item.data.value < -2 ? 'text-red-600' : item.data.value > 2 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {item.data.value > 0 ? '+' : ''}{item.data.value}
+                    <div className={`text-lg font-bold text-right ml-4 ${item.data.value < -2 ? 'text-red-600' : item.data.value > 2 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      {item.data.classification}
                     </div>
                   </div>
                 ))}
