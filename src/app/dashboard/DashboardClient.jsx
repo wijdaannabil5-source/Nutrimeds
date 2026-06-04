@@ -5,7 +5,7 @@ import { useSession } from '@/lib/auth/auth-client';
 import { useRouter } from 'next/navigation';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 // ── Status color map ────────────────────────────────────────
 const STATUS_COLORS = {
@@ -220,22 +220,26 @@ export default function DashboardPage() {
       // Unhide the template momentarily for capturing
       element.style.display = 'block';
 
-      const canvas = await html2canvas(element, {
-        scale: 2, // High resolution
-        useCORS: true,
+      const dataUrl = await toPng(element, {
         backgroundColor: '#0f172a', // Slate-900
+        pixelRatio: 2,
+        cacheBust: true,
       });
 
       element.style.display = 'none';
 
-      const imgData = canvas.toDataURL('image/png');
+      // Load image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise(resolve => img.onload = resolve);
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2],
+        format: [img.width / 2, img.height / 2],
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.addImage(dataUrl, 'PNG', 0, 0, img.width / 2, img.height / 2);
       
       const childName = activeChild?.name || 'Anak';
       pdf.save(`Menu-Gizi-${childName}.pdf`);
