@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const STATUS_COLORS = {
   'Normal': { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-500' },
@@ -142,7 +142,7 @@ export default function CalculatorPage() {
         }
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 68,
         head: [tableColumn],
         body: tableRows,

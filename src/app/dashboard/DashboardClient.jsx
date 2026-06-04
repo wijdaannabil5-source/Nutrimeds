@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from '@/lib/auth/auth-client';
 import { useRouter } from 'next/navigation';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // ── Status color map ────────────────────────────────────────
 const STATUS_COLORS = {
@@ -249,7 +249,7 @@ export default function DashboardPage() {
         }
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 68,
         head: [tableColumn],
         body: tableRows,
