@@ -194,8 +194,15 @@ export default function DashboardPage() {
         }),
       });
       const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Gagal mengganti menu.');
+        return;
+      }
       if (json.success) setMealPlan(json.data);
-    } catch {}
+    } catch (err) {
+      console.error('Error refreshing menu:', err);
+      alert('Terjadi kesalahan koneksi saat mengganti menu.');
+    }
   };
 
   // ── PDF download ──────────────────────────────────────────

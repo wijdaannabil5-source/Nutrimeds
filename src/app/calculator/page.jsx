@@ -84,11 +84,16 @@ export default function CalculatorPage() {
         }),
       });
       const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Gagal mengganti menu.');
+        return;
+      }
       if (json.success) {
         setResult((prev) => ({ ...prev, mealPlan: json.data }));
       }
     } catch (err) {
-      // silent fail for refresh
+      console.error('Error refreshing menu:', err);
+      alert('Terjadi kesalahan koneksi saat mengganti menu.');
     }
   };
 

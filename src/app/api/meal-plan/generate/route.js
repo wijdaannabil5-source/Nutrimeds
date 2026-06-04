@@ -61,14 +61,20 @@ export async function POST(request) {
         fat: meal.fat,
       }));
 
-      db.transaction((tx) => {
-        // Delete old meal plans
-        tx.delete(mealPlans).where(eq(mealPlans.measurementId, measurementId)).run();
-        // Insert new meal plans
-        mealsToInsert.forEach(meal => {
-          tx.insert(mealPlans).values(meal).run();
+      try {
+        db.transaction((tx) => {
+          // Delete old meal plans
+          tx.delete(mealPlans).where(eq(mealPlans.measurementId, measurementId)).run();
+          // Insert new meal plans
+          mealsToInsert.forEach(meal => {
+            tx.insert(mealPlans).values(meal).run();
+          });
         });
-      });
+      } catch (dbError) {
+        // Log the error but do not fail the request - allows the UI to still function
+        // in read-only environments like serverless Vercel deployments.
+        console.error('Failed to persist regenerated meal plan to SQLite database:', dbError);
+      }
     }
 
     return Response.json({ success: true, data: mealPlan });
