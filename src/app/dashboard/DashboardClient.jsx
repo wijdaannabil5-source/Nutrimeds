@@ -209,7 +209,7 @@ export default function DashboardPage() {
 
   // ── PDF download ──────────────────────────────────────────
   const handleDownloadPDF = async () => {
-    if (!activeMeasurement || mealPlan.length === 0) return;
+    if (!activeMeasurement) return;
     const activeChild = children.find((c) => c.id === activeChildId);
     setPdfLoading(true);
     try {
@@ -217,22 +217,41 @@ export default function DashboardPage() {
       const childName = activeChild?.name || 'Anak';
       const nutritionStatus = activeMeasurement.nutritionStatus;
       const recommendedCalories = activeMeasurement.recommendedCalories;
-      const date = new Date().toLocaleDateString('id-ID');
+      const date = new Date(activeMeasurement.measuredAt).toLocaleDateString('id-ID');
 
-      doc.setFontSize(22);
-      doc.setTextColor(14, 165, 233);
-      doc.text('Nutrimeds', 14, 22);
+      // Futuristic Header Banner
+      doc.setFillColor(15, 23, 42); // Slate 900
+      doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
+      
+      // Header Title
+      doc.setFontSize(26);
+      doc.setTextColor(56, 189, 248); // Sky 400
+      doc.text('Nutrimeds', 14, 25);
 
-      doc.setFontSize(14);
-      doc.setTextColor(15, 23, 42);
-      doc.text('Rekomendasi Menu Makan Harian', 14, 32);
+      // Header Subtitle
+      doc.setFontSize(11);
+      doc.setTextColor(203, 213, 225); // Slate 300
+      doc.text('Laporan Rekomendasi Menu Cerdas', doc.internal.pageSize.getWidth() - 14, 25, { align: 'right' });
+
+      // Body Section
+      doc.setFontSize(16);
+      doc.setTextColor(15, 23, 42); // Slate 900
+      doc.text('Rangkuman Gizi & Menu Harian', 14, 55);
+
+      // Info Cards (simulated with light boxes)
+      doc.setFillColor(241, 245, 249); // Slate 100
+      doc.roundedRect(14, 62, 85, 25, 3, 3, 'F');
+      doc.roundedRect(110, 62, 85, 25, 3, 3, 'F');
 
       doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139);
-      doc.text(`Nama Anak: ${childName}`, 14, 42);
-      doc.text(`Status Gizi: ${nutritionStatus || 'Tidak diketahui'}`, 14, 48);
-      doc.text(`Target Kalori Harian: ${recommendedCalories || 0} Kkal`, 14, 54);
-      doc.text(`Tanggal Cetak: ${date}`, 14, 60);
+      doc.setTextColor(100, 116, 139); // Slate 500
+      doc.text('Nama Anak / Status', 19, 70);
+      doc.text('Target Kalori / Tanggal', 115, 70);
+
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42); // Slate 900
+      doc.text(`${childName} • ${nutritionStatus || 'Unknown'}`, 19, 79);
+      doc.text(`${recommendedCalories || 0} Kkal • ${date}`, 115, 79);
 
       const tableColumn = ["Waktu Makan", "Menu", "Kalori", "Protein (g)"];
       const tableRows = [];
@@ -246,31 +265,36 @@ export default function DashboardPage() {
         ];
         tableRows.push(mealData);
         
-        if (meal.ingredients || meal.instructions) {
+        let ingredientsStr = '';
+        if (meal.ingredients) {
+            ingredientsStr = Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : meal.ingredients;
+        }
+
+        if (ingredientsStr || meal.instructions) {
           const details = [];
-          if (meal.ingredients) {
-            const ingList = Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : meal.ingredients;
-            details.push(`Bahan: ${ingList}`);
+          if (ingredientsStr) {
+            details.push(`Bahan: ${ingredientsStr}`);
           }
           if (meal.instructions) {
             details.push(`Cara: ${meal.instructions}`);
           }
-          tableRows.push([{ content: details.join('\n'), colSpan: 4, styles: { textColor: [100, 116, 139], fontStyle: 'italic', fontSize: 9 } }]);
+          tableRows.push([{ content: details.join('\n'), colSpan: 4, styles: { textColor: [100, 116, 139], fontStyle: 'italic', fontSize: 9, cellPadding: { top: 2, bottom: 6, left: 4, right: 4 } } }]);
         }
       });
 
       autoTable(doc, {
-        startY: 68,
+        startY: 100,
         head: [tableColumn],
         body: tableRows,
         theme: 'grid',
-        headStyles: { fillColor: [14, 165, 233] },
-        styles: { cellPadding: 4, fontSize: 10 },
+        headStyles: { fillColor: [14, 165, 233], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { cellPadding: 5, fontSize: 10, lineColor: [226, 232, 240], lineWidth: 0.1 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
-          0: { cellWidth: 30, fontStyle: 'bold' },
-          1: { cellWidth: 'auto' },
-          2: { cellWidth: 25, halign: 'center' },
-          3: { cellWidth: 25, halign: 'center' },
+          0: { cellWidth: 35, fontStyle: 'bold', textColor: [15, 23, 42] },
+          1: { cellWidth: 'auto', textColor: [51, 65, 85] },
+          2: { cellWidth: 25, halign: 'center', textColor: [2, 132, 199], fontStyle: 'bold' },
+          3: { cellWidth: 25, halign: 'center', textColor: [2, 132, 199] },
         },
       });
 
@@ -278,9 +302,9 @@ export default function DashboardPage() {
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.setTextColor(150);
+        doc.setTextColor(148, 163, 184); // Slate 400
         doc.text(
-          'Dicetak secara otomatis oleh Nutrimeds - Kalkulator Gizi & Rekomendasi Menu Anak',
+          'Dicetak secara otomatis oleh Nutrimeds AI • Sistem Pemantauan Gizi Futuristik',
           doc.internal.pageSize.getWidth() / 2,
           doc.internal.pageSize.getHeight() - 10,
           { align: 'center' }
@@ -288,8 +312,6 @@ export default function DashboardPage() {
       }
 
       doc.save(`Menu-Gizi-${childName}.pdf`);
-      
-      // Open the feedback form in a new tab
       window.open('https://docs.google.com/forms/d/e/1FAIpQLSfvhzm6pv7wcEqbXdCzqL3S5b60Nk_2gkRg73lXORk0WUxwyg/viewform', '_blank');
       
     } catch (err) {
@@ -694,29 +716,30 @@ export default function DashboardPage() {
                       </div>
 
                       {/* Export buttons */}
-                      <div className="flex gap-3 justify-center mt-6 pt-6 border-t border-slate-100">
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center print:hidden mt-8">
                         <button
                           onClick={handleDownloadPDF}
                           disabled={pdfLoading}
-                          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all text-sm disabled:opacity-60"
+                          className="group relative overflow-hidden flex items-center justify-center gap-3 bg-slate-900 text-white font-medium px-8 py-4 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(56,189,248,0.3)] disabled:opacity-60 disabled:hover:scale-100 border border-slate-700"
                         >
+                          <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 via-blue-500/20 to-sky-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
                           {pdfLoading ? (
-                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            <svg className="animate-spin h-6 w-6 relative z-10 text-sky-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                           ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 relative z-10 text-sky-400 group-hover:-translate-y-1 group-hover:scale-110 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           )}
-                          Unduh PDF
+                          <span className="relative z-10 tracking-wide">Unduh Dokumen PDF</span>
                         </button>
                         <button
                           onClick={() => window.print()}
-                          className="flex items-center gap-2 bg-white border-2 border-slate-200 text-slate-700 font-semibold px-6 py-2.5 rounded-xl hover:bg-slate-50 transition-all text-sm"
+                          className="group relative overflow-hidden flex items-center justify-center gap-3 bg-white text-slate-800 font-medium px-8 py-4 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(148,163,184,0.3)] border-2 border-slate-200 hover:border-slate-300"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-slate-400 group-hover:text-slate-700 group-hover:rotate-12 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                           </svg>
-                          Cetak
+                          <span className="tracking-wide">Cetak Halaman</span>
                         </button>
                       </div>
                     </div>
