@@ -171,6 +171,10 @@ export default function CalculatorPage() {
       }
 
       doc.save(`Menu-Gizi-${childName}.pdf`);
+      
+      // Open the feedback form in a new tab
+      window.open('https://docs.google.com/forms/d/e/1FAIpQLSfvhzm6pv7wcEqbXdCzqL3S5b60Nk_2gkRg73lXORk0WUxwyg/viewform', '_blank');
+
     } catch (err) {
       console.error(err);
       alert('Gagal mengunduh PDF. Silakan coba lagi.');
