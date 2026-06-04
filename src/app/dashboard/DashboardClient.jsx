@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from '@/lib/auth/auth-client';
 import { useRouter } from 'next/navigation';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 // ── Status color map ────────────────────────────────────────
 const STATUS_COLORS = {
@@ -201,34 +203,83 @@ export default function DashboardPage() {
     const activeChild = children.find((c) => c.id === activeChildId);
     setPdfLoading(true);
     try {
-      const res = await fetch('/api/export/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          childName: activeChild?.name || 'Anak',
-          nutritionStatus: activeMeasurement.nutritionStatus,
-          recommendedCalories: activeMeasurement.recommendedCalories,
-          mealPlan: mealPlan.map((m) => ({
-            mealType: m.mealType,
-            mealTypeLabel: m.mealTypeLabel || getMealLabel(m.mealType),
-            foodName: m.foodName,
-            totalCalories: m.totalCalories,
-            protein: m.protein,
-            ingredients: m.ingredients,
-            instructions: m.instructions,
-          })),
-          date: new Date().toLocaleDateString('id-ID'),
-        }),
+      const doc = new jsPDF();
+      const childName = activeChild?.name || 'Anak';
+      const nutritionStatus = activeMeasurement.nutritionStatus;
+      const recommendedCalories = activeMeasurement.recommendedCalories;
+      const date = new Date().toLocaleDateString('id-ID');
+
+      doc.setFontSize(22);
+      doc.setTextColor(14, 165, 233);
+      doc.text('Nutrimeds', 14, 22);
+
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text('Rekomendasi Menu Makan Harian', 14, 32);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Nama Anak: ${childName}`, 14, 42);
+      doc.text(`Status Gizi: ${nutritionStatus || 'Tidak diketahui'}`, 14, 48);
+      doc.text(`Target Kalori Harian: ${recommendedCalories || 0} Kkal`, 14, 54);
+      doc.text(`Tanggal Cetak: ${date}`, 14, 60);
+
+      const tableColumn = ["Waktu Makan", "Menu", "Kalori", "Protein (g)"];
+      const tableRows = [];
+
+      mealPlan.forEach(meal => {
+        const mealData = [
+          meal.mealTypeLabel || getMealLabel(meal.mealType),
+          meal.foodName,
+          `${meal.totalCalories} Kkal`,
+          `${meal.protein}g`
+        ];
+        tableRows.push(mealData);
+        
+        if (meal.ingredients || meal.instructions) {
+          const details = [];
+          if (meal.ingredients) {
+            const ingList = Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : meal.ingredients;
+            details.push(`Bahan: ${ingList}`);
+          }
+          if (meal.instructions) {
+            details.push(`Cara: ${meal.instructions}`);
+          }
+          tableRows.push([{ content: details.join('\n'), colSpan: 4, styles: { textColor: [100, 116, 139], fontStyle: 'italic', fontSize: 9 } }]);
+        }
       });
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Menu-Gizi-${activeChild?.name || 'Anak'}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
+
+      doc.autoTable({
+        startY: 68,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'grid',
+        headStyles: { fillColor: [14, 165, 233] },
+        styles: { cellPadding: 4, fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 30, fontStyle: 'bold' },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 25, halign: 'center' },
+        },
+      });
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+          'Dicetak secara otomatis oleh Nutrimeds - Kalkulator Gizi & Rekomendasi Menu Anak',
+          doc.internal.pageSize.getWidth() / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+      }
+
+      doc.save(`Menu-Gizi-${childName}.pdf`);
+    } catch (err) {
+      console.error(err);
       alert('Gagal mengunduh PDF.');
     }
     setPdfLoading(false);
