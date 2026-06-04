@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 const STATUS_COLORS = {
   'Normal': { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-500' },
@@ -103,101 +104,32 @@ export default function CalculatorPage() {
     if (!result) return;
     setPdfLoading(true);
     try {
-      const doc = new jsPDF();
-      const childName = form.name || 'Anak';
-      const nutritionStatus = result.overallStatus;
-      const recommendedCalories = result.recommendedCalories;
-      const date = new Date().toLocaleDateString('id-ID');
+      const element = document.getElementById('futuristic-pdf-template');
+      if (!element) throw new Error('Template not found');
 
-      // Futuristic Header Banner
-      doc.setFillColor(15, 23, 42); // Slate 900
-      doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
+      // Unhide the template momentarily for capturing
+      element.style.display = 'block';
+
+      const canvas = await html2canvas(element, {
+        scale: 2, // High resolution
+        useCORS: true,
+        backgroundColor: '#0f172a', // Slate-900
+      });
+
+      element.style.display = 'none';
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2],
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
       
-      // Header Title
-      doc.setFontSize(26);
-      doc.setTextColor(56, 189, 248); // Sky 400
-      doc.text('Nutrimeds', 14, 25);
+      const childName = form.name || 'Anak';
+      pdf.save(`Menu-Gizi-${childName}.pdf`);
 
-      // Header Subtitle
-      doc.setFontSize(11);
-      doc.setTextColor(203, 213, 225); // Slate 300
-      doc.text('Laporan Rekomendasi Menu Cerdas', doc.internal.pageSize.getWidth() - 14, 25, { align: 'right' });
-
-      // Body Section
-      doc.setFontSize(16);
-      doc.setTextColor(15, 23, 42); // Slate 900
-      doc.text('Rangkuman Gizi & Menu Harian', 14, 55);
-
-      // Info Cards (simulated with light boxes)
-      doc.setFillColor(241, 245, 249); // Slate 100
-      doc.roundedRect(14, 62, 85, 25, 3, 3, 'F');
-      doc.roundedRect(110, 62, 85, 25, 3, 3, 'F');
-
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139); // Slate 500
-      doc.text('Nama Anak / Status', 19, 70);
-      doc.text('Target Kalori / Tanggal', 115, 70);
-
-      doc.setFontSize(12);
-      doc.setTextColor(15, 23, 42); // Slate 900
-      doc.text(`${childName} • ${nutritionStatus || 'Unknown'}`, 19, 79);
-      doc.text(`${recommendedCalories || 0} Kkal • ${date}`, 115, 79);
-
-      const tableColumn = ["Waktu Makan", "Menu", "Kalori", "Protein (g)"];
-      const tableRows = [];
-
-      result.mealPlan.forEach(meal => {
-        const mealData = [
-          meal.mealTypeLabel || meal.mealType,
-          meal.foodName,
-          `${meal.totalCalories} Kkal`,
-          `${meal.protein}g`
-        ];
-        tableRows.push(mealData);
-        
-        if (meal.ingredients || meal.instructions) {
-          const details = [];
-          if (meal.ingredients) {
-            const ingList = Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : meal.ingredients;
-            details.push(`Bahan: ${ingList}`);
-          }
-          if (meal.instructions) {
-            details.push(`Cara: ${meal.instructions}`);
-          }
-          tableRows.push([{ content: details.join('\n'), colSpan: 4, styles: { textColor: [100, 116, 139], fontStyle: 'italic', fontSize: 9, cellPadding: { top: 2, bottom: 6, left: 4, right: 4 } } }]);
-        }
-      });
-
-      autoTable(doc, {
-        startY: 100,
-        head: [tableColumn],
-        body: tableRows,
-        theme: 'grid',
-        headStyles: { fillColor: [14, 165, 233], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { cellPadding: 5, fontSize: 10, lineColor: [226, 232, 240], lineWidth: 0.1 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        columnStyles: {
-          0: { cellWidth: 35, fontStyle: 'bold', textColor: [15, 23, 42] },
-          1: { cellWidth: 'auto', textColor: [51, 65, 85] },
-          2: { cellWidth: 25, halign: 'center', textColor: [2, 132, 199], fontStyle: 'bold' },
-          3: { cellWidth: 25, halign: 'center', textColor: [2, 132, 199] },
-        },
-      });
-
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(148, 163, 184); // Slate 400
-        doc.text(
-          'Dicetak secara otomatis oleh Nutrimeds AI • Sistem Pemantauan Gizi Futuristik',
-          doc.internal.pageSize.getWidth() / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
-      }
-
-      doc.save(`Menu-Gizi-${childName}.pdf`);
       
       // Open the feedback form in a new tab
       window.open('https://docs.google.com/forms/d/e/1FAIpQLSfvhzm6pv7wcEqbXdCzqL3S5b60Nk_2gkRg73lXORk0WUxwyg/viewform', '_blank');
@@ -480,6 +412,113 @@ export default function CalculatorPage() {
           </div>
         </div>
       )}
+
+      {/* Hidden Futuristic PDF Template */}
+      {result && (
+        <div 
+          id="futuristic-pdf-template" 
+          className="absolute left-[-9999px] top-0 bg-slate-900 text-white w-[800px] min-h-[1130px] p-10 font-sans shadow-2xl overflow-hidden"
+          style={{ display: 'none' }}
+        >
+          {/* Decorative Glowing Orbs */}
+          <div className="absolute top-[-100px] right-[-100px] w-96 h-96 bg-sky-500/30 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-[-100px] left-[-100px] w-96 h-96 bg-blue-600/20 rounded-full blur-[100px]"></div>
+          
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex justify-between items-end border-b border-slate-700/50 pb-6 mb-8">
+              <div>
+                <h1 className="text-4xl font-black bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent tracking-tight">Nutrimeds AI</h1>
+                <p className="text-slate-400 mt-2 text-lg">Rekomendasi Menu Gizi Cerdas</p>
+              </div>
+              <div className="text-right">
+                <p className="text-slate-300 font-medium">Tanggal Cetak</p>
+                <p className="text-sky-400 text-xl font-bold">{new Date().toLocaleDateString('id-ID')}</p>
+              </div>
+            </div>
+
+            {/* Profile Cards */}
+            <div className="grid grid-cols-2 gap-6 mb-10">
+              <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-bl-full"></div>
+                <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  Profil Anak
+                </p>
+                <h2 className="text-2xl font-bold text-white mb-2">{form.name || 'Anak'}</h2>
+                <div className="inline-block px-3 py-1 bg-slate-900/80 rounded-lg text-sky-400 border border-sky-900/50 text-sm font-medium">
+                  {result.overallStatus || 'Status Tidak Diketahui'}
+                </div>
+              </div>
+
+              <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full"></div>
+                <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  Target Harian
+                </p>
+                <h2 className="text-2xl font-bold text-white mb-2">{result.recommendedCalories || 0} Kkal</h2>
+                <div className="flex gap-4 mt-2">
+                  <span className="text-xs text-slate-400"><strong className="text-blue-400">P:</strong> {result.macroTargets.protein}g</span>
+                  <span className="text-xs text-slate-400"><strong className="text-amber-400">K:</strong> {result.macroTargets.carbs}g</span>
+                  <span className="text-xs text-slate-400"><strong className="text-pink-400">L:</strong> {result.macroTargets.fat}g</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu List */}
+            <h3 className="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              Jadwal Menu Rekomendasi
+            </h3>
+            
+            <div className="space-y-4">
+              {result.mealPlan.map((meal, i) => (
+                <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5 flex flex-col gap-3 relative">
+                  {/* Glowing line on left */}
+                  <div className="absolute left-0 top-4 bottom-4 w-1 bg-gradient-to-b from-sky-400 to-blue-600 rounded-r-md"></div>
+                  
+                  <div className="flex justify-between items-start pl-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl bg-slate-900 p-2 rounded-lg shadow-inner border border-slate-800">
+                        {MEAL_ICONS[meal.mealType] || '🍽️'}
+                      </div>
+                      <div>
+                        <div className="text-sky-400 font-bold tracking-wide uppercase text-xs mb-1">{meal.mealTypeLabel}</div>
+                        <div className="text-white font-semibold text-lg">{meal.foodName}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-emerald-400">{meal.totalCalories}</div>
+                      <div className="text-xs text-slate-400">Kkal</div>
+                    </div>
+                  </div>
+
+                  <div className="pl-4 mt-2 grid grid-cols-1 gap-2">
+                    {meal.ingredients && (
+                      <div className="text-sm text-slate-300">
+                        <span className="text-sky-400 font-medium">Bahan:</span> {Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : meal.ingredients}
+                      </div>
+                    )}
+                    {meal.instructions && (
+                      <div className="text-sm text-slate-400 italic">
+                        <span className="text-sky-400 font-medium not-italic">Cara:</span> {meal.instructions}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-12 pt-6 border-t border-slate-800 text-center text-slate-500 text-sm">
+              <p>Dokumen ini dihasilkan secara otomatis oleh <strong>Nutrimeds AI</strong>.</p>
+              <p className="mt-1 text-xs">Untuk analisis lebih lanjut, selalu konsultasikan dengan ahli gizi profesional.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
