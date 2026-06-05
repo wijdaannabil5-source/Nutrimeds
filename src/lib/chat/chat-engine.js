@@ -117,6 +117,23 @@ const INTENTS = [
     keywords: ['siapa kamu', 'kamu siapa', 'apa ini', 'nutribot', 'chatbot', 'bisa apa', 'fitur apa', 'bantuan'],
     priority: 2,
   },
+  {
+    name: 'forbidden_foods_under_2',
+    keywords: [
+      'tidak boleh dimakan', 'dilarang dimakan', 'tidak boleh diberikan', 'dilarang diberikan', 
+      'dilarang untuk bayi', 'tidak boleh untuk bayi', 'makanan pantangan', 'makanan dilarang', 
+      'makanan berbahaya', 'hindari makanan', 'di bawah 2 tahun', 'dibawah 2 tahun', 'makanan yang dihindari'
+    ],
+    priority: 8,
+  },
+  {
+    name: 'undernutrition_complications',
+    keywords: [
+      'komplikasi', 'akibat gizi buruk', 'bahaya gizi buruk', 'dampak gizi buruk', 'efek gizi buruk', 
+      'penyakit gizi buruk', 'dampak malnutrisi', 'bahaya malnutrisi', 'efek malnutrisi'
+    ],
+    priority: 8,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -216,6 +233,18 @@ const KNOWLEDGE_BASE = {
       '⚠️ **Alergi Makanan pada Anak**\n\n**8 Alergen Utama:**\n🥛 Susu sapi\n🥚 Telur\n🥜 Kacang tanah\n🌰 Kacang pohon (almond, mete)\n🐟 Ikan\n🦐 Udang/kerang\n🌾 Gandum/gluten\n🫘 Kedelai\n\n**Tanda Alergi Makanan:**\n• Ruam/gatal di kulit\n• Bengkak di bibir, wajah, atau lidah\n• Muntah atau diare setelah makan\n• Bersin dan pilek\n• Sesak napas (segera ke IGD!)\n\n**Tips Pengelolaan:**\n1. ✍️ Catat makanan yang memicu reaksi\n2. 🔍 Baca label makanan dengan teliti\n3. 👨‍⚕️ Tes alergi di dokter anak\n4. 🔄 Ganti dengan bahan alternatif\n5. ⏰ Perkenalkan alergen baru satu per satu\n\n**Alternatif Pengganti:**\n• Alergi susu → susu kedelai/almond\n• Alergi telur → tahu/tempe\n• Alergi gandum → beras/ubi\n\n> 🚨 Jika anak mengalami reaksi alergi berat (anafilaksis), segera bawa ke UGD!',
     ],
     suggestions: ['Menu tanpa telur', 'Sumber protein alternatif', 'Rekomendasi menu harian', 'Konsultasi gizi'],
+  },
+  forbidden_foods_under_2: {
+    responses: [
+      '🚫 **Makanan yang Tidak Boleh Diberikan pada Anak di Bawah 2 Tahun**\n\nUntuk kesehatan dan keamanan si kecil, hindari makanan berikut sebelum usianya mencapai 2 tahun:\n\n1. 🍯 **Madu Mentah** (Terutama Usia < 1 Tahun)\n   • *Bahaya:* Botulisme bayi (infeksi bakteri serius yang memproduksi racun di usus bayi).\n\n2. 🥛 **Susu Sapi Cair/UHT** sebagai Minuman Utama (Usia < 1 Tahun)\n   • *Bahaya:* Sulit dicerna ginjal dan pencernaan bayi yang belum matang; dapat memicu anemia defisiensi zat besi. Hanya boleh digunakan sebagai campuran MPASI, bukan minuman utama.\n\n3. 🧂 **Garam & Gula Berlebih**\n   • *Bahaya:* Memperberat kerja ginjal (garam) dan merusak gigi serta memicu obesitas dini (gula). Batasi seminimal mungkin.\n\n4. 🥜 **Makanan Keras/Bulat (Risiko Tersedak)**\n   • Contoh: Kacang utuh, anggur utuh, permen keras, popcorn, potongan wortel mentah yang besar.\n   • *Solusi:* Potong kecil-kecil memanjang (seukuran jari) atau lumatkan.\n\n5. 🍣 **Makanan Mentah / Setengah Matang**\n   • Contoh: Telur setengah matang, sushi mentah, daging/steik setengah matang.\n   • *Bahaya:* Keracunan bakteri *Salmonella* atau *E. coli* karena imun anak belum kuat.\n\n6. 🥤 **Jus Buah Berlebih & Kafein/Teh**\n   • *Bahaya:* Jus buah mengurangi nafsu makan makanan padat dan tinggi gula. Teh menghambat penyerapan zat besi penting.',
+    ],
+    suggestions: ['Panduan MPASI', 'Camilan sehat anak', 'Alergi makanan', 'Rekomendasi menu harian'],
+  },
+  undernutrition_complications: {
+    responses: [
+      '⚠️ **Komplikasi Akibat Gizi Buruk (Malnutrisi) pada Anak**\n\nGizi buruk bukan sekadar masalah tubuh kurus, melainkan kondisi darurat medis yang dapat merusak berbagai organ tubuh dan memicu berbagai komplikasi serius:\n\n1. 🧠 **Keterlambatan Perkembangan Otak & Kognitif**\n   • Kurangnya nutrisi menghambat pembentukan sinapsis otak, menyebabkan penurunan IQ, daya ingat lemah, dan kesulitan belajar di kemudian hari.\n\n2. 🛡️ **Penurunan Sistem Imun (Rentan Infeksi)**\n   • Tubuh tidak mampu memproduksi sel darah putih yang cukup, sehingga anak sangat rentan terhadap penyakit mematikan seperti **Pneumonia (infeksi paru)**, **TBC**, dan **Diare akut**.\n\n3. 🫀 **Gangguan Fungsi Jantung & Sirkulasi**\n   • Otot jantung melemah (atrofi), detak jantung melambat (bradikardia), dan tekanan darah menurun drastis, meningkatkan risiko gagal jantung.\n\n4. ⚖️ **Atrofi Otot & Gangguan Tulang**\n   • Tubuh memecah ototnya sendiri untuk energi (menyebabkan tampilan kulit membungkus tulang/marasmus) dan menghambat pertumbuhan tulang.\n\n5. 🩸 **Anemia Defisiensi Berat**\n   • Kekurangan zat besi, folat, dan vitamin B12 menyebabkan sel darah merah sangat rendah, mengganggu pengiriman oksigen ke seluruh organ vital.\n\n6. ☠️ **Hipotermia & Hipoglikemia**\n   • Anak kehilangan lapisan lemak bawah kulit, sehingga suhunya mudah turun (kedinginan) dan kadar gula darah drop secara ekstrem, yang dapat mengancam jiwa.\n\n> 👨‍⚕️ **Penanganan Cepat:** Gizi buruk (terutama tipe Marasmus atau Kwashiorkor) membutuhkan penanganan medis terstruktur (seperti pemberian formula F-75/F-100 atau RUTF) di Puskesmas/Rumah Sakit.',
+    ],
+    suggestions: ['Apa itu stunting?', 'Cek status gizi', 'Menu tinggi kalori', 'Tips anak susah makan'],
   },
 };
 
