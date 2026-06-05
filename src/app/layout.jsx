@@ -1,6 +1,7 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import NavBarWrapper from './components/NavBarWrapper';
+import ChatWidget from './components/ChatWidget';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,6 +22,8 @@ export default function RootLayout({ children }) {
         <main className="pt-24 min-h-screen">
           {children}
         </main>
+
+        <ChatWidget />
         
         <footer className="bg-slate-900 text-white py-16 px-[5%] mt-12">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
