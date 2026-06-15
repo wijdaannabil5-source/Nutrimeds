@@ -134,6 +134,17 @@ const INTENTS = [
     ],
     priority: 8,
   },
+  {
+    name: 'exclusive_breastfeeding',
+    keywords: [
+      'asi eksklusif', 'asi ekslusif', 'breastfeeding', 'menyusui', 
+      'asi saja', 'exclusive breastfeeding', 'manfaat asi', 'asi 2 tahun',
+      'menyusui sampai 2 tahun', 'pemberian asi', 'asi hingga 2 tahun',
+      'menyusui bayi', 'menyusui anak', 'menyusu', 'asi untuk bayi',
+      'asi untuk anak'
+    ],
+    priority: 8,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -169,7 +180,7 @@ const KNOWLEDGE_BASE = {
     responses: [
       '📏 **Apa itu Stunting?**\n\nStunting adalah kondisi **gagal tumbuh** pada anak akibat kekurangan gizi kronis, terutama pada 1.000 hari pertama kehidupan (sejak dalam kandungan hingga usia 2 tahun).\n\n**Tanda-tanda:**\n• Tinggi badan di bawah standar WHO (Z-score < -2)\n• Pertumbuhan yang lebih lambat dibanding anak seusianya\n• Mudah sakit dan lemas\n\n**Pencegahan:**\n• Penuhi kebutuhan gizi sejak kehamilan\n• ASI eksklusif 6 bulan pertama\n• MPASI bergizi mulai usia 6 bulan\n• Pastikan asupan **protein hewani** (telur, ikan, ayam, daging) setiap hari\n• Pantau pertumbuhan rutin di posyandu\n\n**Nutrisi Kunci Anti-Stunting:**\n🥚 Protein hewani (telur, ikan, ayam)\n🥛 Kalsium (susu, ikan teri)\n🥩 Zat Besi (daging merah, hati ayam)\n🦐 Zinc/Seng (seafood, kacang-kacangan)',
     ],
-    suggestions: ['Menu anti-stunting', 'Sumber protein anak', 'Rekomendasi menu harian', 'Kebutuhan kalori anak'],
+    suggestions: ['ASI Eksklusif', 'Menu anti-stunting', 'Sumber protein anak', 'Rekomendasi menu harian'],
   },
 
   obesity_info: {
@@ -204,7 +215,7 @@ const KNOWLEDGE_BASE = {
     responses: [
       '👶 **Panduan MPASI (Makanan Pendamping ASI)**\n\n**Usia 6 Bulan — Tahap Perkenalan**\n• Tekstur: Bubur halus/puree\n• Frekuensi: 2-3x sehari\n• Porsi: 2-3 sendok makan per sesi\n• Contoh: Puree pisang, bubur beras + ASI, puree labu kuning\n\n**Usia 7-8 Bulan — Tekstur Naik**\n• Tekstur: Bubur kasar/mashed\n• Frekuensi: 2-3x makan + 1-2x camilan\n• Porsi: ½ mangkuk (125ml)\n• Contoh: Nasi tim ayam wortel, bubur ikan sayur\n\n**Usia 9-11 Bulan — Finger Food**\n• Tekstur: Dicincang halus, finger food\n• Frekuensi: 3x makan + 2x camilan\n• Porsi: ½ mangkuk\n• Contoh: Nasi lembek + telur orak-arik, pisang potong\n\n**Prinsip MPASI:**\n✅ Karbohidrat + Protein Hewani + Sayur + Lemak\n✅ Tambahkan minyak/mentega untuk kalori ekstra\n✅ Variasikan bahan makanan setiap hari\n❌ Hindari garam & gula tambahan sebelum 1 tahun\n❌ Jangan berikan madu sebelum 1 tahun',
     ],
-    suggestions: ['Resep MPASI sederhana', 'Kebutuhan kalori bayi', 'Protein untuk bayi', 'Tips bayi susah makan'],
+    suggestions: ['ASI Eksklusif', 'Resep MPASI sederhana', 'Kebutuhan kalori bayi', 'Protein untuk bayi'],
   },
 
   feeding_guide_toddler: {
@@ -238,13 +249,19 @@ const KNOWLEDGE_BASE = {
     responses: [
       '🚫 **Makanan yang Tidak Boleh Diberikan pada Anak di Bawah 2 Tahun**\n\nUntuk kesehatan dan keamanan si kecil, hindari makanan berikut sebelum usianya mencapai 2 tahun:\n\n1. 🍯 **Madu Mentah** (Terutama Usia < 1 Tahun)\n   • *Bahaya:* Botulisme bayi (infeksi bakteri serius yang memproduksi racun di usus bayi).\n\n2. 🥛 **Susu Sapi Cair/UHT** sebagai Minuman Utama (Usia < 1 Tahun)\n   • *Bahaya:* Sulit dicerna ginjal dan pencernaan bayi yang belum matang; dapat memicu anemia defisiensi zat besi. Hanya boleh digunakan sebagai campuran MPASI, bukan minuman utama.\n\n3. 🧂 **Garam & Gula Berlebih**\n   • *Bahaya:* Memperberat kerja ginjal (garam) dan merusak gigi serta memicu obesitas dini (gula). Batasi seminimal mungkin.\n\n4. 🥜 **Makanan Keras/Bulat (Risiko Tersedak)**\n   • Contoh: Kacang utuh, anggur utuh, permen keras, popcorn, potongan wortel mentah yang besar.\n   • *Solusi:* Potong kecil-kecil memanjang (seukuran jari) atau lumatkan.\n\n5. 🍣 **Makanan Mentah / Setengah Matang**\n   • Contoh: Telur setengah matang, sushi mentah, daging/steik setengah matang.\n   • *Bahaya:* Keracunan bakteri *Salmonella* atau *E. coli* karena imun anak belum kuat.\n\n6. 🥤 **Jus Buah Berlebih & Kafein/Teh**\n   • *Bahaya:* Jus buah mengurangi nafsu makan makanan padat dan tinggi gula. Teh menghambat penyerapan zat besi penting.',
     ],
-    suggestions: ['Panduan MPASI', 'Camilan sehat anak', 'Alergi makanan', 'Rekomendasi menu harian'],
+    suggestions: ['ASI Eksklusif', 'Panduan MPASI', 'Camilan sehat anak', 'Rekomendasi menu harian'],
   },
   undernutrition_complications: {
     responses: [
       '⚠️ **Komplikasi Akibat Gizi Buruk (Malnutrisi) pada Anak**\n\nGizi buruk bukan sekadar masalah tubuh kurus, melainkan kondisi darurat medis yang dapat merusak berbagai organ tubuh dan memicu berbagai komplikasi serius:\n\n1. 🧠 **Keterlambatan Perkembangan Otak & Kognitif**\n   • Kurangnya nutrisi menghambat pembentukan sinapsis otak, menyebabkan penurunan IQ, daya ingat lemah, dan kesulitan belajar di kemudian hari.\n\n2. 🛡️ **Penurunan Sistem Imun (Rentan Infeksi)**\n   • Tubuh tidak mampu memproduksi sel darah putih yang cukup, sehingga anak sangat rentan terhadap penyakit mematikan seperti **Pneumonia (infeksi paru)**, **TBC**, dan **Diare akut**.\n\n3. 🫀 **Gangguan Fungsi Jantung & Sirkulasi**\n   • Otot jantung melemah (atrofi), detak jantung melambat (bradikardia), dan tekanan darah menurun drastis, meningkatkan risiko gagal jantung.\n\n4. ⚖️ **Atrofi Otot & Gangguan Tulang**\n   • Tubuh memecah ototnya sendiri untuk energi (menyebabkan tampilan kulit membungkus tulang/marasmus) dan menghambat pertumbuhan tulang.\n\n5. 🩸 **Anemia Defisiensi Berat**\n   • Kekurangan zat besi, folat, dan vitamin B12 menyebabkan sel darah merah sangat rendah, mengganggu pengiriman oksigen ke seluruh organ vital.\n\n6. ☠️ **Hipotermia & Hipoglikemia**\n   • Anak kehilangan lapisan lemak bawah kulit, sehingga suhunya mudah turun (kedinginan) dan kadar gula darah drop secara ekstrem, yang dapat mengancam jiwa.\n\n> 👨‍⚕️ **Penanganan Cepat:** Gizi buruk (terutama tipe Marasmus atau Kwashiorkor) membutuhkan penanganan medis terstruktur (seperti pemberian formula F-75/F-100 atau RUTF) di Puskesmas/Rumah Sakit.',
     ],
     suggestions: ['Apa itu stunting?', 'Cek status gizi', 'Menu tinggi kalori', 'Tips anak susah makan'],
+  },
+  exclusive_breastfeeding: {
+    responses: [
+      '🍼 **Panduan ASI Eksklusif & Menyusui hingga 2 Tahun**\n\nMenyusui adalah salah satu fondasi terbaik untuk tumbuh kembang optimal si kecil. Berikut adalah panduan pemberian ASI berdasarkan rekomendasi WHO dan Kementerian Kesehatan RI:\n\n1. 👶 **ASI Eksklusif (Usia 0–6 Bulan)**\n   • Bayi **hanya** diberikan ASI saja tanpa tambahan makanan atau minuman lain (termasuk air putih, madu, atau susu formula), kecuali obat/vitamin atas petunjuk medis.\n   • *Manfaat:* Memenuhi 100% kebutuhan nutrisi bayi, memperkuat daya tahan tubuh alami (imunoglobin), dan melindungi dari infeksi pencernaan & pernapasan.\n\n2. 🥣 **ASI + MPASI (Usia 6–24 Bulan / 2 Tahun)**\n   • Setelah usia 6 bulan, kebutuhan nutrisi anak semakin meningkat dan tidak lagi bisa tercukupi hanya dari ASI saja.\n   • Berikan Makanan Pendamping ASI (MPASI) yang bergizi seimbang (mengandung zat gizi makro dan mikro, terutama protein hewani) sambil tetap melanjutkan pemberian ASI.\n\n3. ⏳ **Mengapa Dianjurkan Menyusui hingga 2 Tahun?**\n   • *Nutrisi Berkualitas:* Pada tahun kedua (12-24 bulan), ASI masih menyumbang sekitar 35-40% kebutuhan energi harian anak.\n   • *Kekebalan Tubuh:* ASI terus mengalirkan antibodi konsentrat tinggi yang melindungi balita ketika mereka mulai aktif mengeksplorasi lingkungan luar.\n   • *Perkembangan Kognitif:* Kandungan asam lemak esensial (seperti DHA & ARA) dalam ASI membantu perkembangan jaringan otak anak secara maksimal.\n   • *Ikatan Batin (Bonding):* Proses menyusui mempererat hubungan emosional antara ibu dan anak, memberikan rasa aman dan tenang.\n\n**💡 Tips Sukses Menyusui:**\n• Berikan ASI sesering mungkin sesuai keinginan bayi (*on demand*). Semakin sering disusui/dipompa, produksi ASI akan semakin melimpah.\n• Ibu menyusui disarankan mengonsumsi tambahan energi sekitar 500 Kkal/hari, minum air yang cukup, dan menjaga pola makan bergizi seimbang.\n• Hindari memberikan dot atau empeng terlalu dini agar bayi tidak mengalami bingung puting.',
+    ],
+    suggestions: ['Panduan MPASI', 'Cegah stunting', 'Makanan dilarang di bawah 2 tahun', 'Kebutuhan kalori bayi'],
   },
 };
 
