@@ -145,6 +145,24 @@ const INTENTS = [
     ],
     priority: 8,
   },
+  {
+    name: 'idai_anp',
+    keywords: [
+      'asuhan nutrisi pediatrik', 'anp idai', '5 langkah idai', 
+      'pediatric nutrition care', 'asuhan nutrisi anak', 'rekomendasi idai nutrisi',
+      'langkah nutrisi idai'
+    ],
+    priority: 8,
+  },
+  {
+    name: 'idai_mpasi_rules',
+    keywords: [
+      'feeding rules idai', 'aturan makan idai', 'syarat mpasi idai', 
+      'tanda bayi siap makan', 'kesiapan mpasi', 'responsive feeding idai',
+      'jadwal makan idai', 'distraksi makan', 'durasi makan idai'
+    ],
+    priority: 8,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -215,7 +233,7 @@ const KNOWLEDGE_BASE = {
     responses: [
       '👶 **Panduan MPASI (Makanan Pendamping ASI)**\n\n**Usia 6 Bulan — Tahap Perkenalan**\n• Tekstur: Bubur halus/puree\n• Frekuensi: 2-3x sehari\n• Porsi: 2-3 sendok makan per sesi\n• Contoh: Puree pisang, bubur beras + ASI, puree labu kuning\n\n**Usia 7-8 Bulan — Tekstur Naik**\n• Tekstur: Bubur kasar/mashed\n• Frekuensi: 2-3x makan + 1-2x camilan\n• Porsi: ½ mangkuk (125ml)\n• Contoh: Nasi tim ayam wortel, bubur ikan sayur\n\n**Usia 9-11 Bulan — Finger Food**\n• Tekstur: Dicincang halus, finger food\n• Frekuensi: 3x makan + 2x camilan\n• Porsi: ½ mangkuk\n• Contoh: Nasi lembek + telur orak-arik, pisang potong\n\n**Prinsip MPASI:**\n✅ Karbohidrat + Protein Hewani + Sayur + Lemak\n✅ Tambahkan minyak/mentega untuk kalori ekstra\n✅ Variasikan bahan makanan setiap hari\n❌ Hindari garam & gula tambahan sebelum 1 tahun\n❌ Jangan berikan madu sebelum 1 tahun',
     ],
-    suggestions: ['ASI Eksklusif', 'Resep MPASI sederhana', 'Kebutuhan kalori bayi', 'Protein untuk bayi'],
+    suggestions: ['Aturan makan IDAI', 'ASI Eksklusif', 'Resep MPASI sederhana', 'Protein untuk bayi'],
   },
 
   feeding_guide_toddler: {
@@ -236,7 +254,7 @@ const KNOWLEDGE_BASE = {
     responses: [
       '😤 **Tips Mengatasi Anak Susah Makan (GTM)**\n\nAnda tidak sendirian! Hampir semua orang tua pernah mengalami fase ini.\n\n**Strategi Efektif:**\n\n1. 🎨 **Sajikan Menarik**\nBentuk makanan jadi lucu (wajah, hewan, bunga)\n\n2. 👨‍🍳 **Libatkan Anak**\nAjak anak memilih menu dan membantu masak\n\n3. 📏 **Porsi Kecil Dulu**\nJangan intimidasi dengan porsi besar\n\n4. 🔄 **Perkenalkan Berulang**\nAnak perlu 10-15x exposure sebelum menerima makanan baru\n\n5. ⏰ **Jadwal Konsisten**\nMakan di jam yang sama setiap hari\n\n6. 📵 **Tanpa Gadget**\nFokus pada makanan saat makan\n\n7. 🚫 **Jangan Paksa**\nMemaksa justru membuat anak trauma dengan makanan\n\n8. 🥤 **Batasi Susu Berlebihan**\nSusu berlebihan membuat anak kenyang sebelum makan\n\n9. 🏃 **Ajak Aktif Bergerak**\nAktivitas fisik meningkatkan nafsu makan\n\n10. 👪 **Makan Bersama**\nAnak meniru kebiasaan makan orang tua\n\n> 💡 Jika GTM berlangsung > 2 minggu dan BB turun, konsultasi ke dokter anak.',
     ],
-    suggestions: ['Menu menarik untuk anak', 'Rekomendasi camilan', 'Kebutuhan kalori anak', 'Kapan harus ke dokter?'],
+    suggestions: ['Aturan makan IDAI', 'Menu menarik untuk anak', 'Rekomendasi camilan', 'Kebutuhan kalori anak'],
   },
 
   allergy_info: {
@@ -261,7 +279,19 @@ const KNOWLEDGE_BASE = {
     responses: [
       '🍼 **Panduan ASI Eksklusif & Menyusui hingga 2 Tahun**\n\nMenyusui adalah salah satu fondasi terbaik untuk tumbuh kembang optimal si kecil. Berikut adalah panduan pemberian ASI berdasarkan rekomendasi WHO dan Kementerian Kesehatan RI:\n\n1. 👶 **ASI Eksklusif (Usia 0–6 Bulan)**\n   • Bayi **hanya** diberikan ASI saja tanpa tambahan makanan atau minuman lain (termasuk air putih, madu, atau susu formula), kecuali obat/vitamin atas petunjuk medis.\n   • *Manfaat:* Memenuhi 100% kebutuhan nutrisi bayi, memperkuat daya tahan tubuh alami (imunoglobin), dan melindungi dari infeksi pencernaan & pernapasan.\n\n2. 🥣 **ASI + MPASI (Usia 6–24 Bulan / 2 Tahun)**\n   • Setelah usia 6 bulan, kebutuhan nutrisi anak semakin meningkat dan tidak lagi bisa tercukupi hanya dari ASI saja.\n   • Berikan Makanan Pendamping ASI (MPASI) yang bergizi seimbang (mengandung zat gizi makro dan mikro, terutama protein hewani) sambil tetap melanjutkan pemberian ASI.\n\n3. ⏳ **Mengapa Dianjurkan Menyusui hingga 2 Tahun?**\n   • *Nutrisi Berkualitas:* Pada tahun kedua (12-24 bulan), ASI masih menyumbang sekitar 35-40% kebutuhan energi harian anak.\n   • *Kekebalan Tubuh:* ASI terus mengalirkan antibodi konsentrat tinggi yang melindungi balita ketika mereka mulai aktif mengeksplorasi lingkungan luar.\n   • *Perkembangan Kognitif:* Kandungan asam lemak esensial (seperti DHA & ARA) dalam ASI membantu perkembangan jaringan otak anak secara maksimal.\n   • *Ikatan Batin (Bonding):* Proses menyusui mempererat hubungan emosional antara ibu dan anak, memberikan rasa aman dan tenang.\n\n**💡 Tips Sukses Menyusui:**\n• Berikan ASI sesering mungkin sesuai keinginan bayi (*on demand*). Semakin sering disusui/dipompa, produksi ASI akan semakin melimpah.\n• Ibu menyusui disarankan mengonsumsi tambahan energi sekitar 500 Kkal/hari, minum air yang cukup, dan menjaga pola makan bergizi seimbang.\n• Hindari memberikan dot atau empeng terlalu dini agar bayi tidak mengalami bingung puting.',
     ],
-    suggestions: ['Panduan MPASI', 'Cegah stunting', 'Makanan dilarang di bawah 2 tahun', 'Kebutuhan kalori bayi'],
+    suggestions: ['Aturan makan IDAI', 'Panduan MPASI', 'Cegah stunting', 'Makanan dilarang di bawah 2 tahun'],
+  },
+  idai_anp: {
+    responses: [
+      '🩺 **5 Langkah Asuhan Nutrisi Pediatrik (ANP) menurut IDAI**\n\nAsuhan Nutrisi Pediatrik (ANP) adalah panduan terstruktur dari Ikatan Dokter Anak Indonesia untuk mencegah malnutrisi dan mengoptimalkan tumbuh kembang anak:\n\n1. 📊 **Penilaian Status Gizi (Assessment)**\n   • Menentukan status gizi anak dengan mengukur antropometri (berat badan, tinggi badan, lingkar kepala) dan memplotnya pada Kurva Pertumbuhan WHO/CDC untuk mengetahui apakah gizi anak normal, kurang, buruk, stunting, atau obesitas.\n\n2. 🔢 **Penentuan Kebutuhan Nutrisi (Determine Requirement)**\n   • Menghitung kebutuhan kalori harian dan makronutrisi (protein, lemak, karbohidrat) serta mikronutrien sesuai usia, jenis kelamin, aktivitas fisik, dan kondisi medis spesifik anak.\n\n3. 👄 **Penentuan Rute Pemberian Makanan (Route)**\n   • Memilih jalur asupan makanan terbaik. Jalur **oral** (mulut) adalah prioritas utama jika fungsi menelan normal. Jalur **enteral** (selang NGT) digunakan jika ada masalah menelan, dan jalur **parenteral** (infus intravena) jika saluran pencernaan tidak dapat berfungsi.\n\n4. 🥘 **Penentuan Jenis Makanan (Formulation)**\n   • Memilih formula atau makanan padat yang tepat berdasarkan usia dan kondisi anak (misalnya: ASI, MPASI bubur saring, makanan keluarga, atau susu formula khusus/Pangan Olahan untuk Kondisi Medis Khusus jika ada indikasi klinis).\n\n5. 📝 **Pemantauan & Evaluasi (Monitoring & Evaluation)**\n   • Memantau secara ketat toleransi anak terhadap makanan (adanya muntah, diare, alergi) dan memantau pertumbuhan berkala (weight gain/growth chart). Rencana nutrisi disesuaikan ulang jika target kenaikan berat badan tidak tercapai.\n\n> 💡 *Konsultasikan dengan dokter anak Anda jika si kecil mengalami perlambatan pertumbuhan (faltering growth) untuk penanganan ANP yang tepat.*',
+    ],
+    suggestions: ['Aturan makan IDAI', 'Cek status gizi', 'Kebutuhan kalori bayi', 'Rekomendasi menu harian'],
+  },
+  idai_mpasi_rules: {
+    responses: [
+      '🥣 **Panduan MPASI & Aturan Makan (Feeding Rules) menurut IDAI**\n\nIkatan Dokter Anak Indonesia (IDAI) menyarankan MPASI dimulai tepat pada usia 6 bulan. Berikut adalah syarat kesiapan, prinsip MPASI, dan aturan makan (*feeding rules*) untuk mencegah masalah makan:\n\n### 1. Tanda Bayi Siap MPASI 👶\n• Kepala dan leher tegak, bayi dapat duduk dengan bantuan minimal.\n• Tertarik melihat makanan dan mencoba meraihnya.\n• Refleks menjulurkan lidah (*extrusion reflex* / melepeh) berkurang.\n\n### 2. Syarat MPASI yang Benar 4️⃣\n• **Tepat Waktu:** Diberikan mulai usia 6 bulan saat ASI saja tidak mencukupi kebutuhan energi & zat besi.\n• **Adekuat:** Mengandung zat gizi mikro (terutama Zat Besi, Seng) dan makro (Protein Hewani, Lemak, Karbohidrat) yang seimbang.\n• **Aman & Higienis:** Proses persiapan, penyimpanan, dan penyajian bersih.\n• **Diberikan dengan Cara yang Benar:** Mengikuti sinyal lapar/kenyang anak (*responsive feeding*).\n\n### 3. *Feeding Rules* (Aturan Makan) IDAI ⏱️\n**A. Jadwal Teratur:**\n• Buat jadwal makan utama (3x) dan camilan (1-2x) yang konsisten.\n• Batasi durasi makan **maksimal 30 menit**. Jika lewat 30 menit, hentikan makan.\n• Di luar jam makan/camilan, hanya berikan air putih (hindari ngemil susu/jus terus-menerus agar anak merasakan lapar saat jam makan).\n\n**B. Lingkungan Menyenangkan:**\n• Ciptakan suasana makan yang menyenangkan tanpa tekanan atau paksaan.\n• **Bebas Distraksi:** Matikan TV, singkirkan gadget, mainan, atau membawa anak jalan-jalan saat makan.\n• Jangan jadikan makanan sebagai hadiah (*reward*).\n\n**C. Prosedur Pemberian:**\n• Tawarkan makanan porsi kecil terlebih dahulu. Jika habis, tambahkan.\n• Dorong anak untuk makan sendiri agar melatih motorik kasar dan halus.\n• Jika anak menolak makan (GTM/Gerakan Tutup Mulut), tawarkan kembali tanpa memaksa. Jika tetap menolak setelah 10-15 menit, akhiri sesi makan.',
+    ],
+    suggestions: ['Panduan MPASI', 'Aturan asuhan nutrisi IDAI', 'ASI Eksklusif', 'Tips anak susah makan'],
   },
 };
 
