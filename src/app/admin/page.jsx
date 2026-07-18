@@ -51,6 +51,9 @@ export default function AdminPage() {
   const [simulating, setSimulating] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
 
+  // State autentikasi - cegah flash konten sebelum validasi
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const fetchAdminData = async () => {
     try {
       setLoading(true);
@@ -64,6 +67,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/activities?${queryParams.toString()}`);
       
       if (res.status === 401) {
+        setIsAuthenticated(false);
         router.push('/admin/login');
         return;
       }
@@ -74,6 +78,7 @@ export default function AdminPage() {
         throw new Error(json.error || 'Gagal memuat data dari server.');
       }
       
+      setIsAuthenticated(true);
       setData(json.data);
       setError('');
     } catch (err) {
@@ -84,8 +89,28 @@ export default function AdminPage() {
     }
   };
 
+  // Cek sesi admin saat pertama kali load
   useEffect(() => {
-    fetchAdminData();
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/admin/activities?page=1&limit=1&search=&action=ALL');
+        if (res.status === 401) {
+          router.push('/admin/login');
+          return;
+        }
+        setIsAuthenticated(true);
+        fetchAdminData();
+      } catch {
+        router.push('/admin/login');
+      }
+    };
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAdminData();
+    }
   }, [logPage, logAction]);
 
   const handleLogSearchSubmit = (e) => {
@@ -351,6 +376,18 @@ export default function AdminPage() {
       c.latestStatus.toLowerCase().includes(q)
     );
   };
+
+  // Jangan tampilkan konten admin jika belum terautentikasi
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-medium">Memeriksa sesi admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-100 text-slate-800 flex overflow-hidden font-sans">
