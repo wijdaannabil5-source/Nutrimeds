@@ -45,6 +45,18 @@ db.exec(`
     fat REAL,
     FOREIGN KEY (measurement_id) REFERENCES measurements(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS activity_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    user_name TEXT,
+    action TEXT NOT NULL,
+    description TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
 `);
 
 console.log('App tables created successfully.');

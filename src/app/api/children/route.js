@@ -4,6 +4,7 @@ import { db } from '@/lib/db/index';
 import { children } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { logActivity } from '@/lib/db/logger';
 
 /**
  * Helper to get the authenticated user from the session.
@@ -72,6 +73,15 @@ export async function POST(request) {
     };
 
     db.insert(children).values(newChild).run();
+
+    // Log activity
+    logActivity({
+      userId: user.id,
+      userName: user.name,
+      action: 'CREATE_CHILD',
+      description: `Mendaftarkan profil anak baru: ${name} (${gender === 'male' ? 'Laki-laki' : 'Perempuan'}, lahir ${dateOfBirth})`,
+      req: request,
+    });
 
     return Response.json({ success: true, data: newChild }, { status: 201 });
   } catch (error) {

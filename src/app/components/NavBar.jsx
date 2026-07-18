@@ -36,6 +36,12 @@ export default function NavBar() {
         <li>
           <Link href="/calculator" className={navLinkClass('/calculator')}>Kalkulator</Link>
         </li>
+        <li>
+          <Link href="/pptx" className={navLinkClass('/pptx')}>Generator PPTX</Link>
+        </li>
+        <li>
+          <Link href="/admin" className={navLinkClass('/admin')}>Admin</Link>
+        </li>
         {session && (
           <li>
             <Link href="/dashboard" className={navLinkClass('/dashboard')}>Dashboard</Link>
@@ -86,6 +92,8 @@ export default function NavBar() {
           <div className="px-[5%] py-6 space-y-4">
             <Link href="/" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Beranda</Link>
             <Link href="/calculator" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Kalkulator</Link>
+            <Link href="/pptx" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Generator PPTX</Link>
+            <Link href="/admin" onClick={() => setMobileOpen(false)} className="block text-lg font-medium text-primary">Admin Panel</Link>
             {session && (
               <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Dashboard</Link>
             )}

@@ -1,5 +1,6 @@
 import { calculateNutritionStatus, calculateAgeMonths } from '@/lib/nutrition/calculator';
 import { generateDailyMenu } from '@/lib/nutrition/meal-generator';
+import { logActivity } from '@/lib/db/logger';
 
 /**
  * POST /api/calculate
@@ -54,6 +55,13 @@ export async function POST(request) {
 
     // Generate a meal plan
     const mealPlan = generateDailyMenu(result.recommendedCalories, result.overallStatus);
+
+    // Log activity
+    logActivity({
+      action: 'CALCULATE',
+      description: `Kalkulasi gizi mandiri (anonim): ${gender === 'male' ? 'Laki-laki' : 'Perempuan'}, ${weight} kg, ${height} cm, ${ageMonths} bulan. Hasil: ${result.overallStatus}`,
+      req: request,
+    });
 
     return Response.json({
       success: true,

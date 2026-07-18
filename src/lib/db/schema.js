@@ -89,3 +89,15 @@ export const mealPlans = sqliteTable('meal_plans', {
   carbs: real('carbs'),       // grams
   fat: real('fat'),           // grams
 });
+
+export const activityLogs = sqliteTable('activity_logs', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  userName: text('user_name'),
+  action: text('action').notNull(), // 'CALCULATE', 'CREATE_CHILD', 'CHAT', 'ADD_MEASUREMENT', 'GENERATE_PPTX'
+  description: text('description').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+

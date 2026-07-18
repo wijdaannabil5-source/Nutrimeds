@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateNutritionStatus, calculateAgeMonths } from '@/lib/nutrition/calculator';
 import { generateDailyMenu } from '@/lib/nutrition/meal-generator';
+import { logActivity } from '@/lib/db/logger';
 
 async function getUser() {
   const session = await auth.api.getSession({
@@ -120,6 +121,15 @@ export async function POST(request) {
       mealsToInsert.forEach(meal => {
         tx.insert(mealPlans).values(meal).run();
       });
+    });
+
+    // Log activity
+    logActivity({
+      userId: user.id,
+      userName: user.name,
+      action: 'ADD_MEASUREMENT',
+      description: `Menambahkan pengukuran gizi untuk ${child.name}: ${weight} kg, ${height} cm, ${ageMonths} bulan. Hasil: ${calcResult.overallStatus}`,
+      req: request,
     });
 
     return Response.json({

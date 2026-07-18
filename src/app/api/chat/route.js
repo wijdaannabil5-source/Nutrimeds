@@ -1,4 +1,7 @@
 import { processMessage } from '@/lib/chat/chat-engine';
+import { logActivity } from '@/lib/db/logger';
+import { auth } from '@/lib/auth/auth';
+import { headers } from 'next/headers';
 
 export async function POST(request) {
   try {
@@ -17,6 +20,23 @@ export async function POST(request) {
 
     // Process through the chat engine
     const response = processMessage(trimmedMessage, context || {});
+
+    // Log activity
+    try {
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      });
+      const user = session?.user || null;
+      logActivity({
+        userId: user?.id,
+        userName: user?.name,
+        action: 'CHAT',
+        description: `Tanya AI: "${trimmedMessage.length > 60 ? trimmedMessage.slice(0, 57) + '...' : trimmedMessage}"`,
+        req: request,
+      });
+    } catch (e) {
+      console.error('Failed to get session for chat logging:', e);
+    }
 
     return Response.json({
       success: true,

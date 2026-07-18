@@ -103,6 +103,18 @@ sqlite.exec(`
     carbs REAL,
     fat REAL
   );
+
+  -- App: activity logs
+  CREATE TABLE IF NOT EXISTS activity_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    user_name TEXT,
+    action TEXT NOT NULL,
+    description TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 console.log('✅ Database migration complete. Tables created in:', DB_PATH);
