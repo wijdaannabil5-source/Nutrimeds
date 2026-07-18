@@ -37,9 +37,7 @@ export default function NavBar() {
           <Link href="/calculator" className={navLinkClass('/calculator')}>Kalkulator</Link>
         </li>
 
-        <li>
-          <Link href="/admin" className={navLinkClass('/admin')}>Admin</Link>
-        </li>
+
         {session && (
           <li>
             <Link href="/dashboard" className={navLinkClass('/dashboard')}>Dashboard</Link>
@@ -91,7 +89,7 @@ export default function NavBar() {
             <Link href="/" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Beranda</Link>
             <Link href="/calculator" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Kalkulator</Link>
 
-            <Link href="/admin" onClick={() => setMobileOpen(false)} className="block text-lg font-medium text-primary">Admin Panel</Link>
+
             {session && (
               <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg font-medium">Dashboard</Link>
             )}
