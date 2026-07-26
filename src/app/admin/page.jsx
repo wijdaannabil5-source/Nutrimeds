@@ -44,6 +44,14 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('');
   const [childSearch, setChildSearch] = useState('');
 
+  // State Modal CRUD Pengguna
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [userSubmitting, setUserSubmitting] = useState(false);
+  const [userModalError, setUserModalError] = useState('');
+  const [userFormData, setUserFormData] = useState({ id: '', name: '', email: '', password: '' });
+  const [deletingUserId, setDeletingUserId] = useState(null);
+
   // Sesi interaksi Donut Chart
   const [hoveredDonutSegment, setHoveredDonutSegment] = useState(null);
 
@@ -53,6 +61,97 @@ export default function AdminPage() {
 
   // State autentikasi - cegah flash konten sebelum validasi
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Handlers CRUD Pengguna
+  const handleOpenAddUserModal = () => {
+    setUserFormData({ id: '', name: '', email: '', password: '' });
+    setUserModalError('');
+    setIsAddUserModalOpen(true);
+  };
+
+  const handleOpenEditUserModal = (user) => {
+    setUserFormData({ id: user.id, name: user.name, email: user.email, password: '' });
+    setUserModalError('');
+    setIsEditUserModalOpen(true);
+  };
+
+  const handleSaveAddUser = async (e) => {
+    e.preventDefault();
+    setUserModalError('');
+    if (!userFormData.name.trim() || !userFormData.email.trim()) {
+      setUserModalError('Nama dan email wajib diisi.');
+      return;
+    }
+    try {
+      setUserSubmitting(true);
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userFormData),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal menambahkan pengguna.');
+      }
+      showToast('Pengguna baru berhasil ditambahkan!', 'success');
+      setIsAddUserModalOpen(false);
+      fetchAdminData();
+    } catch (err) {
+      setUserModalError(err.message);
+    } finally {
+      setUserSubmitting(false);
+    }
+  };
+
+  const handleSaveEditUser = async (e) => {
+    e.preventDefault();
+    setUserModalError('');
+    if (!userFormData.name.trim() || !userFormData.email.trim()) {
+      setUserModalError('Nama dan email tidak boleh kosong.');
+      return;
+    }
+    try {
+      setUserSubmitting(true);
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userFormData),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal memperbarui pengguna.');
+      }
+      showToast('Data pengguna berhasil diperbarui!', 'success');
+      setIsEditUserModalOpen(false);
+      fetchAdminData();
+    } catch (err) {
+      setUserModalError(err.message);
+    } finally {
+      setUserSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus akun "${user.name}" (${user.email})? Seluruh data anak dan histori pengukuran juga akan dihapus.`)) {
+      return;
+    }
+    try {
+      setDeletingUserId(user.id);
+      const res = await fetch(`/api/admin/users?id=${user.id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal menghapus pengguna.');
+      }
+      showToast(`Pengguna ${user.name} berhasil dihapus.`, 'success');
+      fetchAdminData();
+    } catch (err) {
+      showToast(err.message || 'Terjadi kesalahan saat menghapus.', 'error');
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
   const fetchAdminData = async () => {
     try {
@@ -676,13 +775,21 @@ export default function AdminPage() {
                         <h3 className="text-lg font-bold text-slate-800">Daftar Akun Pengguna</h3>
                         <p className="text-xs text-slate-500 mt-0.5">Semua pengguna yang terdaftar di database.</p>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Cari user berdasarkan nama/email..."
-                        value={userSearch}
-                        onChange={(e) => setUserSearch(e.target.value)}
-                        className="px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none w-64 shadow-sm"
-                      />
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Cari user berdasarkan nama/email..."
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          className="px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none w-64 shadow-sm"
+                        />
+                        <button
+                          onClick={handleOpenAddUserModal}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm flex items-center gap-2 active:scale-95 whitespace-nowrap"
+                        >
+                          <span>➕</span> Tambah Pengguna
+                        </button>
+                      </div>
                     </div>
 
                     {/* Tabel User */}
@@ -694,12 +801,13 @@ export default function AdminPage() {
                             <th className="px-6 py-4">Alamat Email</th>
                             <th className="px-6 py-4">Tanggal Registrasi</th>
                             <th className="px-6 py-4">ID Pengguna</th>
+                            <th className="px-6 py-4 text-center">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                           {getFilteredUsers().length === 0 ? (
                             <tr>
-                              <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
+                              <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
                                 Tidak ada data pengguna ditemukan.
                               </td>
                             </tr>
@@ -725,6 +833,25 @@ export default function AdminPage() {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-slate-400">
                                     {user.id}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button
+                                        onClick={() => handleOpenEditUserModal(user)}
+                                        className="p-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+                                        title="Edit Pengguna"
+                                      >
+                                        ✏️ Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteUser(user)}
+                                        disabled={deletingUserId === user.id}
+                                        className="p-1.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                                        title="Hapus Pengguna"
+                                      >
+                                        {deletingUserId === user.id ? '⌛' : '🗑️'} Hapus
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
@@ -1051,6 +1178,192 @@ export default function AdminPage() {
             )
           )}
         </div>
+
+        {/* ─────────────────────────────────────────────────────────────
+            MODAL TAMBAH PENGGUNA
+            ───────────────────────────────────────────────────────────── */}
+        {isAddUserModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-fade-in">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>➕</span> Tambah Pengguna Baru
+                </h3>
+                <button
+                  onClick={() => setIsAddUserModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {userModalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {userModalError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveAddUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Lengkap <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={userFormData.name}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Contoh: Ayah Budi"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Alamat Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={userFormData.email}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="nama@email.com"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Kata Sandi <span className="text-slate-400 font-normal">(opsional, min. 8 karakter)</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={userFormData.password}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Ketik kata sandi pengguna..."
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddUserModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={userSubmitting}
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-60"
+                  >
+                    {userSubmitting ? (
+                      <>
+                        <span className="animate-spin text-sm">🔄</span>
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan Pengguna</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            MODAL EDIT PENGGUNA
+            ───────────────────────────────────────────────────────────── */}
+        {isEditUserModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-fade-in">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>✏️</span> Edit Data Pengguna
+                </h3>
+                <button
+                  onClick={() => setIsEditUserModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {userModalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {userModalError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveEditUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Lengkap <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={userFormData.name}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Alamat Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={userFormData.email}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Kata Sandi Baru <span className="text-slate-400 font-normal">(Kosongkan jika tidak diubah)</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={userFormData.password}
+                    onChange={(e) => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Minimal 8 karakter"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditUserModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={userSubmitting}
+                    className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-60"
+                  >
+                    {userSubmitting ? (
+                      <>
+                        <span className="animate-spin text-sm">🔄</span>
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan Perubahan</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
