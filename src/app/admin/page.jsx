@@ -19,6 +19,7 @@ const STATUS_THEMES = {
 // Icon navigasi sidebar
 const TAB_ICONS = {
   'overview': '📊',
+  'submissions': '📋',
   'users': '👥',
   'children': '👶',
   'logs': '📝',
@@ -51,6 +52,22 @@ export default function AdminPage() {
   const [userModalError, setUserModalError] = useState('');
   const [userFormData, setUserFormData] = useState({ id: '', name: '', email: '', password: '' });
   const [deletingUserId, setDeletingUserId] = useState(null);
+
+  // State Modal CRUD Data Anak
+  const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+  const [isEditChildModalOpen, setIsEditChildModalOpen] = useState(false);
+  const [childSubmitting, setChildSubmitting] = useState(false);
+  const [childModalError, setChildModalError] = useState('');
+  const [childFormData, setChildFormData] = useState({
+    id: '',
+    userId: '',
+    name: '',
+    dateOfBirth: '',
+    gender: 'male',
+    weight: '',
+    height: ''
+  });
+  const [deletingChildId, setDeletingChildId] = useState(null);
 
   // Sesi interaksi Donut Chart
   const [hoveredDonutSegment, setHoveredDonutSegment] = useState(null);
@@ -153,12 +170,124 @@ export default function AdminPage() {
     }
   };
 
+  // Handlers CRUD Data Anak
+  const handleOpenAddChildModal = (selectedUserId = '') => {
+    const defaultUserId = selectedUserId || (data?.usersList?.[0]?.id || '');
+    setChildFormData({
+      id: '',
+      userId: defaultUserId,
+      name: '',
+      dateOfBirth: new Date().toISOString().split('T')[0],
+      gender: 'male',
+      weight: '',
+      height: ''
+    });
+    setChildModalError('');
+    setIsAddChildModalOpen(true);
+  };
+
+  const handleOpenEditChildModal = (child) => {
+    setChildFormData({
+      id: child.id,
+      userId: child.userId,
+      name: child.name,
+      dateOfBirth: child.dateOfBirth,
+      gender: child.gender,
+      weight: child.latestWeight || '',
+      height: child.latestHeight || ''
+    });
+    setChildModalError('');
+    setIsEditChildModalOpen(true);
+  };
+
+  const handleSaveAddChild = async (e) => {
+    e.preventDefault();
+    setChildModalError('');
+    if (!childFormData.userId) {
+      setChildModalError('Pilih pengguna / orang tua terlebih dahulu.');
+      return;
+    }
+    if (!childFormData.name.trim() || !childFormData.dateOfBirth) {
+      setChildModalError('Nama anak dan tanggal lahir wajib diisi.');
+      return;
+    }
+    try {
+      setChildSubmitting(true);
+      const res = await fetch('/api/admin/children', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(childFormData),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal menambahkan profil anak.');
+      }
+      showToast('Profil anak baru berhasil ditambahkan!', 'success');
+      setIsAddChildModalOpen(false);
+      fetchAdminData();
+    } catch (err) {
+      setChildModalError(err.message);
+    } finally {
+      setChildSubmitting(false);
+    }
+  };
+
+  const handleSaveEditChild = async (e) => {
+    e.preventDefault();
+    setChildModalError('');
+    if (!childFormData.name.trim() || !childFormData.dateOfBirth) {
+      setChildModalError('Nama anak dan tanggal lahir wajib diisi.');
+      return;
+    }
+    try {
+      setChildSubmitting(true);
+      const res = await fetch('/api/admin/children', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(childFormData),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal memperbarui data anak.');
+      }
+      showToast('Data anak berhasil diperbarui!', 'success');
+      setIsEditChildModalOpen(false);
+      fetchAdminData();
+    } catch (err) {
+      setChildModalError(err.message);
+    } finally {
+      setChildSubmitting(false);
+    }
+  };
+
+  const handleDeleteChild = async (child) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus data anak "${child.name}"? Histori pengukurannya juga akan terhapus.`)) {
+      return;
+    }
+    try {
+      setDeletingChildId(child.id);
+      const res = await fetch(`/api/admin/children?id=${child.id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Gagal menghapus data anak.');
+      }
+      showToast(`Data anak ${child.name} berhasil dihapus.`, 'success');
+      fetchAdminData();
+    } catch (err) {
+      showToast(err.message || 'Terjadi kesalahan saat menghapus.', 'error');
+    } finally {
+      setDeletingChildId(null);
+    }
+  };
+
   const fetchAdminData = async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: logPage.toString(),
-        limit: '15', // limit log audit
+        limit: '15',
         search: logSearch,
         action: logAction
       });
@@ -188,7 +317,6 @@ export default function AdminPage() {
     }
   };
 
-  // Cek sesi admin saat pertama kali load
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -235,7 +363,7 @@ export default function AdminPage() {
         throw new Error(json.error || 'Simulasi gagal.');
       }
       
-      showToast('Simulasi sukses! 25+ Aktivitas & User baru ditambahkan.', 'success');
+      showToast('Simulasi sukses! Data Aktivitas & User baru ditambahkan.', 'success');
       setLogPage(1);
       fetchAdminData();
     } catch (err) {
@@ -274,6 +402,11 @@ export default function AdminPage() {
       'ADD_MEASUREMENT': 'bg-amber-50 text-amber-700 border-amber-200',
       'GENERATE_PPTX': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
       'USER_SIGNUP': 'bg-violet-50 text-violet-700 border-violet-200',
+      'ADMIN_CREATE_USER': 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold',
+      'ADMIN_UPDATE_USER': 'bg-amber-50 text-amber-800 border-amber-300 font-bold',
+      'ADMIN_DELETE_USER': 'bg-red-50 text-red-800 border-red-300 font-bold',
+      'ADMIN_UPDATE_CHILD': 'bg-indigo-50 text-indigo-800 border-indigo-300 font-bold',
+      'ADMIN_DELETE_CHILD': 'bg-rose-50 text-rose-800 border-rose-300 font-bold',
       'MOCK_SIMULATION': 'bg-rose-50 text-rose-700 border-rose-200'
     };
     return classes[action] || 'bg-slate-50 text-slate-700 border-slate-200';
@@ -291,7 +424,7 @@ export default function AdminPage() {
 
     const dist = data.statusDistribution;
     const total = data.stats.totalMeasurements;
-    const circumference = 314.16; // 2 * PI * R (R=50)
+    const circumference = 314.16;
     let accumulatedPercent = 0;
     const segments = [];
 
@@ -338,7 +471,6 @@ export default function AdminPage() {
           ))}
         </svg>
 
-        {/* Text Center Overlay */}
         <div className="absolute flex flex-col items-center justify-center text-center w-28 h-28 bg-white rounded-full shadow-inner z-10 pointer-events-none">
           {hoveredDonutSegment ? (
             <>
@@ -388,7 +520,6 @@ export default function AdminPage() {
       return { x, y, label: d.label, count: d.count };
     });
     
-    // Curved/Bezier path calculation
     let pathD = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i];
@@ -411,7 +542,6 @@ export default function AdminPage() {
           </linearGradient>
         </defs>
         
-        {/* Horizontal gridlines */}
         {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
           const y = paddingY + ratio * (height - 2 * paddingY);
           const gridVal = Math.round(maxVal * (1 - ratio));
@@ -423,13 +553,9 @@ export default function AdminPage() {
           );
         })}
         
-        {/* Area fill */}
         <path d={areaD} fill="url(#chartGradient)" />
-        
-        {/* Main curved path */}
         <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth="4" strokeLinecap="round" />
         
-        {/* Dots and tooltips */}
         {points.map((p, i) => (
           <g key={i} className="group cursor-pointer">
             <circle cx={p.x} cy={p.y} r="5" fill="#ffffff" stroke="#0ea5e9" strokeWidth="3" />
@@ -442,7 +568,6 @@ export default function AdminPage() {
           </g>
         ))}
         
-        {/* Bottom labels */}
         {points.map((p, i) => (
           <text key={i} x={p.x} y={height - 8} fill="#64748b" fontSize="9.5" textAnchor="middle" fontWeight="bold">
             {p.label.split(' ')[0]}
@@ -476,7 +601,6 @@ export default function AdminPage() {
     );
   };
 
-  // Jangan tampilkan konten admin jika belum terautentikasi
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -510,7 +634,6 @@ export default function AdminPage() {
           ───────────────────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-68 bg-slate-900 text-slate-300 border-r border-slate-800 relative z-10">
         
-        {/* Brand/Logo */}
         <div className="p-6 border-b border-slate-800 flex items-center gap-3 bg-slate-950">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xl shadow-md">
             🩺
@@ -521,7 +644,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tab Items List */}
         <nav className="flex-1 p-4 space-y-1.5">
           <span className="block px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
             Menu Pemantauan
@@ -529,8 +651,9 @@ export default function AdminPage() {
           
           {[
             { id: 'overview', name: 'Ikhtisar Portal', desc: 'Metrik & Tren Utama' },
-            { id: 'users', name: 'Manajemen User', desc: 'Daftar Akun Pengguna' },
-            { id: 'children', name: 'Kesehatan Anak', desc: 'Daftar Profil & Status Gizi' },
+            { id: 'submissions', name: 'Statistik Data Pengisian', desc: 'Laporan Form & Aktivitas' },
+            { id: 'users', name: 'Manajemen User', desc: 'Daftar & Edit Akun Pengguna' },
+            { id: 'children', name: 'Kesehatan & Data Anak', desc: 'Data Anak & Status Gizi' },
             { id: 'logs', name: 'Log Audit Sistem', desc: 'Aktivitas & Log Teknis' },
             { id: 'settings', name: 'Alat & Simulator', desc: 'Pengendali Simulasi DB' }
           ].map(tab => (
@@ -554,7 +677,6 @@ export default function AdminPage() {
           ))}
         </nav>
 
-        {/* Footer Admin Profile */}
         <div className="p-4 border-t border-slate-800 bg-slate-950 flex flex-col gap-3">
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold flex items-center justify-center text-sm">
@@ -580,7 +702,6 @@ export default function AdminPage() {
           ───────────────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col min-h-screen overflow-y-auto relative">
         
-        {/* Top Header bar */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between z-30 shadow-sm">
           <div>
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
@@ -588,14 +709,14 @@ export default function AdminPage() {
             </div>
             <h1 className="text-xl font-bold text-slate-800 mt-0.5 capitalize">
               {activeTab === 'overview' ? 'Panel Utama (Dashboard)' : 
+               activeTab === 'submissions' ? 'Statistik Data Pengisian Form' :
                activeTab === 'users' ? 'Manajemen Pengguna' : 
-               activeTab === 'children' ? 'Kesehatan & Antropometri Anak' : 
+               activeTab === 'children' ? 'Kesehatan & Data Anak' : 
                activeTab === 'logs' ? 'Audit Log Aktivitas' : 'Pengaturan & Alat Simulasi'}
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Mobile Drawer Trigger/Header Info */}
             <div className="lg:hidden text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg font-bold">
               Admin: gege
             </div>
@@ -613,7 +734,6 @@ export default function AdminPage() {
           </div>
         </header>
 
-        {/* Content body */}
         <div className="p-6 md:p-8 flex-1">
           {loading && !data ? (
             <div className="flex flex-col items-center justify-center py-32 gap-4">
@@ -628,6 +748,43 @@ export default function AdminPage() {
               <div className="space-y-8 animate-fade-in">
                 
                 {/* ─────────────────────────────────────────────────────────────
+                    QUICK CONTROL BAR (TOMBOL AKSI CEPAT ADMIN)
+                    ───────────────────────────────────────────────────────────── */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-lg text-white flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-700/50">
+                  <div>
+                    <span className="text-xs font-extrabold text-emerald-400 uppercase tracking-widest block">Admin Control Bar</span>
+                    <h3 className="text-lg font-extrabold text-white mt-0.5">Kelola Pengguna & Statistik Data Pengisian</h3>
+                    <p className="text-xs text-slate-300 mt-1">Tambahkan pengguna baru, perbarui data profil anak/pengukuran, atau pantau statistik pengisian form.</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={handleOpenAddUserModal}
+                      className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95"
+                    >
+                      <span>➕</span> Tambah User Baru
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('users')}
+                      className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs rounded-xl transition-all flex items-center gap-2 active:scale-95"
+                    >
+                      <span>✏️</span> Edit Data User
+                    </button>
+                    <button
+                      onClick={() => handleOpenAddChildModal()}
+                      className="px-4 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2 active:scale-95"
+                    >
+                      <span>👶</span> Tambah Data Anak
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('submissions')}
+                      className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2 active:scale-95"
+                    >
+                      <span>📋</span> Statistik Pengisian
+                    </button>
+                  </div>
+                </div>
+
+                {/* ─────────────────────────────────────────────────────────────
                     TAB 1: OVERVIEW (DASHBOARD)
                     ───────────────────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
@@ -635,12 +792,11 @@ export default function AdminPage() {
                     
                     {/* Grid Metrik Utama */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      
                       {[
                         { title: 'Total Pengguna', value: data.stats.totalUsers, icon: '👥', color: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-600', note: 'Pengguna terdaftar' },
                         { title: 'Anak Dipantau', value: data.stats.totalChildren, icon: '👶', color: 'border-l-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600', note: 'Profil anak aktif' },
                         { title: 'Uji Antropometri', value: data.stats.totalMeasurements, icon: '⚖️', color: 'border-l-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-600', note: 'Z-score terhitung' },
-                        { title: 'Log Aktivitas', value: data.stats.totalActivities, icon: '⚡', color: 'border-l-sky-500', bg: 'bg-sky-500/10', text: 'text-sky-600', note: 'Total interaksi audit' }
+                        { title: 'Total Form Entry', value: data.submissionStats?.totalSubmissions || 0, icon: '📋', color: 'border-l-sky-500', bg: 'bg-sky-500/10', text: 'text-sky-600', note: `${data.submissionStats?.submissionsToday || 0} pengisian hari ini` }
                       ].map((card, idx) => (
                         <div key={idx} className={`bg-white border border-slate-200 border-l-4 ${card.color} rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
                           <div className="flex justify-between items-start">
@@ -657,12 +813,61 @@ export default function AdminPage() {
                       ))}
                     </div>
 
+                    {/* Ringkasan Statistik Data Pengisian Widget */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Ringkasan Aktivitas</span>
+                          <h3 className="text-lg font-bold text-slate-800 mt-0.5">📋 Statistik Data Pengisian Form CMS</h3>
+                          <p className="text-xs text-slate-500">Rincian data yang diinputkan oleh pengguna dan admin ke dalam sistem.</p>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('submissions')}
+                          className="text-xs font-bold text-primary hover:underline flex items-center gap-1 self-start sm:self-center"
+                        >
+                          Lihat Detail Statistik Pengisian →
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase block">Total Pengisian</span>
+                          <span className="text-2xl font-extrabold text-slate-800 mt-1 block">{data.submissionStats?.totalSubmissions || 0}</span>
+                          <span className="text-[10px] text-emerald-600 font-bold mt-1 block">+{data.submissionStats?.submissionsToday || 0} hari ini</span>
+                        </div>
+                        <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-amber-800 uppercase block">Antropometri</span>
+                          <span className="text-2xl font-extrabold text-amber-900 mt-1 block">{data.submissionStats?.measurementsCount || 0}</span>
+                          <span className="text-[10px] text-amber-700 font-medium mt-1 block">Data Gizi</span>
+                        </div>
+                        <div className="bg-emerald-50/70 border border-emerald-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-emerald-800 uppercase block">Profil Anak</span>
+                          <span className="text-2xl font-extrabold text-emerald-900 mt-1 block">{data.submissionStats?.childrenCount || 0}</span>
+                          <span className="text-[10px] text-emerald-700 font-medium mt-1 block">Anak Terdaftar</span>
+                        </div>
+                        <div className="bg-sky-50/70 border border-sky-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-sky-800 uppercase block">Rencana Makan</span>
+                          <span className="text-2xl font-extrabold text-sky-900 mt-1 block">{data.submissionStats?.mealPlansCount || 0}</span>
+                          <span className="text-[10px] text-sky-700 font-medium mt-1 block">Resep Makanan</span>
+                        </div>
+                        <div className="bg-cyan-50/70 border border-cyan-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-cyan-800 uppercase block">Konsultasi AI</span>
+                          <span className="text-2xl font-extrabold text-cyan-900 mt-1 block">{data.submissionStats?.aiChatsCount || 0}</span>
+                          <span className="text-[10px] text-cyan-700 font-medium mt-1 block">Tanya Jawab</span>
+                        </div>
+                        <div className="bg-purple-50/70 border border-purple-200 p-4 rounded-xl text-center">
+                          <span className="text-[11px] font-bold text-purple-800 uppercase block">Kalkulator</span>
+                          <span className="text-2xl font-extrabold text-purple-900 mt-1 block">{data.submissionStats?.calculationsCount || 0}</span>
+                          <span className="text-[10px] text-purple-700 font-medium mt-1 block">Mandiri</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Health Indicators Widget */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-4">🚨 Indikator Bahaya Kesehatan Gizi Anak</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
-                        {/* Stunting indicator */}
                         <div className="bg-red-50/50 border border-red-100 rounded-xl p-4 flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between text-xs font-bold text-red-800">
@@ -676,7 +881,6 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        {/* Obesity indicator */}
                         <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-4 flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between text-xs font-bold text-yellow-800">
@@ -690,7 +894,6 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        {/* Underweight indicator */}
                         <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between text-xs font-bold text-orange-800">
@@ -709,7 +912,6 @@ export default function AdminPage() {
 
                     {/* Grafik Analisis dan Donut Sebaran */}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                      {/* Trend spline */}
                       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-3 flex flex-col justify-between">
                         <div>
                           <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Statistik Sistem</span>
@@ -721,7 +923,6 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Donut Gizi */}
                       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2 flex flex-col justify-between items-center text-center">
                         <div className="w-full text-left">
                           <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Data Antropometri</span>
@@ -765,15 +966,181 @@ export default function AdminPage() {
                 )}
 
                 {/* ─────────────────────────────────────────────────────────────
+                    TAB: STATISTIK DATA PENGISIAN (SUBMISSIONS DETAIL)
+                    ───────────────────────────────────────────────────────────── */}
+                {activeTab === 'submissions' && (
+                  <div className="space-y-8">
+                    {/* Metrik Utama Statistik Pengisian */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="bg-white border border-slate-200 border-l-4 border-l-sky-500 rounded-2xl p-6 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Form Entry</span>
+                            <h3 className="text-3xl font-extrabold text-slate-800 mt-2 tracking-tight">
+                              {data.submissionStats?.totalSubmissions || 0}
+                            </h3>
+                          </div>
+                          <div className="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center text-xl">
+                            📋
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 mt-4 block">Akumulasi pengisian di seluruh form</span>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-2xl p-6 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pengisian Hari Ini</span>
+                            <h3 className="text-3xl font-extrabold text-slate-800 mt-2 tracking-tight">
+                              {data.submissionStats?.submissionsToday || 0}
+                            </h3>
+                          </div>
+                          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl">
+                            ⚡
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 mt-4 block">
+                          {data.submissionStats?.submissionsThisMonth || 0} pengisian bulan ini
+                        </span>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-2xl p-6 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entry Antropometri</span>
+                            <h3 className="text-3xl font-extrabold text-slate-800 mt-2 tracking-tight">
+                              {data.submissionStats?.measurementsCount || 0}
+                            </h3>
+                          </div>
+                          <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl">
+                            ⚖️
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 mt-4 block">
+                          Rata-rata {data.submissionStats?.avgMeasurementsPerChild || 0} entry / anak
+                        </span>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 border-l-4 border-l-violet-500 rounded-2xl p-6 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entry Rencana & AI</span>
+                            <h3 className="text-3xl font-extrabold text-slate-800 mt-2 tracking-tight">
+                              {(data.submissionStats?.mealPlansCount || 0) + (data.submissionStats?.aiChatsCount || 0)}
+                            </h3>
+                          </div>
+                          <div className="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-600 flex items-center justify-center text-xl">
+                            💬
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 mt-4 block">
+                          {data.submissionStats?.mealPlansCount || 0} resep + {data.submissionStats?.aiChatsCount || 0} chat AI
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Breakdown & Detail Pengisian */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Distribusi Form</span>
+                            <h3 className="text-lg font-bold text-slate-800 mt-0.5">📊 Statistik Pengisian per Kategori Form</h3>
+                          </div>
+                          <span className="text-xs bg-slate-100 px-3 py-1 rounded-full font-bold text-slate-600">
+                            {data.submissionStats?.totalSubmissions || 0} Total Entry
+                          </span>
+                        </div>
+
+                        <div className="space-y-4">
+                          {data.submissionStats?.byType && Object.entries(data.submissionStats.byType).map(([typeName, cnt], idx) => {
+                            const total = data.submissionStats.totalSubmissions || 1;
+                            const pct = Math.round((cnt / total) * 100);
+                            const colors = [
+                              'bg-amber-500',
+                              'bg-emerald-500',
+                              'bg-sky-500',
+                              'bg-purple-500',
+                              'bg-cyan-500',
+                              'bg-fuchsia-500',
+                            ];
+                            const bgBar = colors[idx % colors.length];
+                            return (
+                              <div key={typeName} className="space-y-1.5">
+                                <div className="flex justify-between text-xs font-bold">
+                                  <span className="text-slate-700">{typeName}</span>
+                                  <span className="text-slate-500">{cnt} pengisian ({pct}%)</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                  <div
+                                    className={`${bgBar} h-full rounded-full transition-all duration-500`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Kualitas Input Data</span>
+                          <h3 className="text-lg font-bold text-slate-800 mt-0.5">🎯 Kelengkapan & Cakupan Pengisian Data</h3>
+                          <p className="text-xs text-slate-500 mt-1">Metrik persentase profil anak terisi dan frekuensi pemantauan gizi.</p>
+                        </div>
+
+                        <div className="space-y-6 my-6">
+                          <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-xl">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold text-emerald-900">Cakupan Pengukuran Profil Anak</span>
+                              <span className="text-lg font-extrabold text-emerald-700">{data.submissionStats?.childMeasurementCoverage || 0}%</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600">
+                              Persentase profil anak terdaftar yang setidaknya memiliki 1 entri data pengukuran gizi (antropometri).
+                            </p>
+                            <div className="w-full bg-emerald-200 h-2.5 rounded-full overflow-hidden mt-3">
+                              <div
+                                className="bg-emerald-600 h-full rounded-full transition-all duration-500"
+                                style={{ width: `${data.submissionStats?.childMeasurementCoverage || 0}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="bg-sky-50/60 border border-sky-100 p-4 rounded-xl">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold text-sky-900">Rata-rata Frekuensi Pengisian per Anak</span>
+                              <span className="text-lg font-extrabold text-sky-700">{data.submissionStats?.avgMeasurementsPerChild || 0} x</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600">
+                              Rata-rata berapa kali data antropometri diinput ulang untuk memantau grafik perkembangan anak.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                          <span>Sistem pemantauan aktif realtime</span>
+                          <button
+                            onClick={() => handleOpenAddChildModal()}
+                            className="font-bold text-primary hover:underline"
+                          >
+                            + Tambah Data Pengukuran Anak
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─────────────────────────────────────────────────────────────
                     TAB 2: USERS (DAFTAR USER)
                     ───────────────────────────────────────────────────────────── */}
                 {activeTab === 'users' && (
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                    {/* Header Tab */}
                     <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-slate-800">Daftar Akun Pengguna</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Semua pengguna yang terdaftar di database.</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Semua pengguna yang terdaftar di database. Anda dapat menambahkan pengguna baru atau mengedit data yang ada.</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <input
@@ -792,7 +1159,6 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Tabel User */}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -839,9 +1205,16 @@ export default function AdminPage() {
                                       <button
                                         onClick={() => handleOpenEditUserModal(user)}
                                         className="p-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
-                                        title="Edit Pengguna"
+                                        title="Edit Data User"
                                       >
-                                        ✏️ Edit
+                                        ✏️ Edit Data
+                                      </button>
+                                      <button
+                                        onClick={() => handleOpenAddChildModal(user.id)}
+                                        className="p-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+                                        title="Tambah Anak untuk User ini"
+                                      >
+                                        👶 + Anak
                                       </button>
                                       <button
                                         onClick={() => handleDeleteUser(user)}
@@ -864,41 +1237,48 @@ export default function AdminPage() {
                 )}
 
                 {/* ─────────────────────────────────────────────────────────────
-                    TAB 3: CHILDREN (KESEHATAN ANAK)
+                    TAB 3: CHILDREN (KESEHATAN ANAK & DATA)
                     ───────────────────────────────────────────────────────────── */}
                 {activeTab === 'children' && (
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                    {/* Header Tab */}
                     <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                        <h3 className="text-lg font-bold text-slate-800">Pemantauan Kesehatan Gizi Anak</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Daftar anak dan status gizi pengukuran terakhir.</p>
+                        <h3 className="text-lg font-bold text-slate-800">Pemantauan Kesehatan Gizi & Data Anak</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Daftar anak dan status gizi pengukuran terakhir. Anda dapat menambahkan data profil baru atau mengedit data yang ada.</p>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Cari anak berdasarkan nama/status..."
-                        value={childSearch}
-                        onChange={(e) => setChildSearch(e.target.value)}
-                        className="px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none w-64 shadow-sm"
-                      />
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Cari anak berdasarkan nama/status..."
+                          value={childSearch}
+                          onChange={(e) => setChildSearch(e.target.value)}
+                          className="px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none w-64 shadow-sm"
+                        />
+                        <button
+                          onClick={() => handleOpenAddChildModal()}
+                          className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition-all shadow-sm flex items-center gap-2 active:scale-95 whitespace-nowrap"
+                        >
+                          <span>➕</span> Tambah Data Anak
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Tabel Anak */}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                             <th className="px-6 py-4">Nama Anak</th>
                             <th className="px-6 py-4">Orang Tua (User)</th>
-                            <th className="px-6 py-4">Tgl Lahir / Jenis Kelamin</th>
+                            <th className="px-6 py-4">Tgl Lahir / Gender</th>
                             <th className="px-6 py-4">Ukuran Terakhir</th>
                             <th className="px-6 py-4">Status Gizi (Terakhir)</th>
+                            <th className="px-6 py-4 text-center">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                           {getFilteredChildren().length === 0 ? (
                             <tr>
-                              <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
+                              <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
                                 Tidak ada data profil anak ditemukan.
                               </td>
                             </tr>
@@ -939,6 +1319,25 @@ export default function AdminPage() {
                                       {child.latestStatus}
                                     </span>
                                   </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button
+                                        onClick={() => handleOpenEditChildModal(child)}
+                                        className="p-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+                                        title="Edit Data Anak"
+                                      >
+                                        ✏️ Edit Data
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteChild(child)}
+                                        disabled={deletingChildId === child.id}
+                                        className="p-1.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                                        title="Hapus Data Anak"
+                                      >
+                                        {deletingChildId === child.id ? '⌛' : '🗑️'} Hapus
+                                      </button>
+                                    </div>
+                                  </td>
                                 </tr>
                               );
                             })
@@ -954,14 +1353,12 @@ export default function AdminPage() {
                     ───────────────────────────────────────────────────────────── */}
                 {activeTab === 'logs' && (
                   <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                    {/* Header */}
                     <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-slate-800">Audit Log Transaksional</h3>
                         <p className="text-xs text-slate-500 mt-0.5">Audit trail sistem lengkap. Klik baris log untuk detail sistem metadata.</p>
                       </div>
 
-                      {/* Filter */}
                       <form onSubmit={handleLogSearchSubmit} className="flex flex-wrap items-center gap-3">
                         <select
                           value={logAction}
@@ -975,6 +1372,9 @@ export default function AdminPage() {
                           <option value="ADD_MEASUREMENT">Input Gizi Baru</option>
                           <option value="GENERATE_PPTX">Unduh PPTX</option>
                           <option value="USER_SIGNUP">Registrasi User</option>
+                          <option value="ADMIN_CREATE_USER">Admin: Tambah User</option>
+                          <option value="ADMIN_UPDATE_USER">Admin: Edit User</option>
+                          <option value="ADMIN_DELETE_USER">Admin: Hapus User</option>
                           <option value="MOCK_SIMULATION">Simulasi Sistem</option>
                         </select>
 
@@ -993,7 +1393,6 @@ export default function AdminPage() {
                       </form>
                     </div>
 
-                    {/* Tabel log audit */}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -1021,7 +1420,6 @@ export default function AdminPage() {
 
                               return (
                                 <g key={log.id}>
-                                  {/* Baris utama */}
                                   <tr 
                                     onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
                                     className={`hover:bg-slate-50 cursor-pointer transition-all ${isExpanded ? 'bg-slate-50/80 font-medium' : ''}`}
@@ -1057,7 +1455,6 @@ export default function AdminPage() {
                                     </td>
                                   </tr>
 
-                                  {/* Baris Ekspansi Detail */}
                                   {isExpanded && (
                                     <tr className="bg-slate-100/50">
                                       <td colSpan="5" className="px-6 py-4 border-t border-b border-slate-200">
@@ -1094,7 +1491,6 @@ export default function AdminPage() {
                       </table>
                     </div>
 
-                    {/* Pagination */}
                     {data.pagination.totalPages > 1 && (
                       <div className="p-6 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
                         <div className="text-xs font-bold text-slate-500">
@@ -1364,6 +1760,278 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            MODAL TAMBAH DATA ANAK
+            ───────────────────────────────────────────────────────────── */}
+        {isAddChildModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 animate-fade-in">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>👶</span> Tambah Data Profil Anak Baru
+                </h3>
+                <button
+                  onClick={() => setIsAddChildModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {childModalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {childModalError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveAddChild} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Orang Tua / Pengguna <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={childFormData.userId}
+                    onChange={(e) => setChildFormData(prev => ({ ...prev, userId: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all bg-white"
+                  >
+                    <option value="" disabled>-- Pilih Pengguna Terdaftar --</option>
+                    {data?.usersList?.map(u => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Anak <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={childFormData.name}
+                    onChange={(e) => setChildFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Contoh: Alif Santoso"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Tanggal Lahir <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={childFormData.dateOfBirth}
+                      onChange={(e) => setChildFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Jenis Kelamin <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={childFormData.gender}
+                      onChange={(e) => setChildFormData(prev => ({ ...prev, gender: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all bg-white"
+                    >
+                      <option value="male">👦 Laki-laki</option>
+                      <option value="female">👧 Perempuan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Data Pengukuran Gizi Awal (Opsional)</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Berat Badan (kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={childFormData.weight}
+                        onChange={(e) => setChildFormData(prev => ({ ...prev, weight: e.target.value }))}
+                        placeholder="Contoh: 12.5"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Tinggi Badan (cm)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={childFormData.height}
+                        onChange={(e) => setChildFormData(prev => ({ ...prev, height: e.target.value }))}
+                        placeholder="Contoh: 86.0"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddChildModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={childSubmitting}
+                    className="px-5 py-2 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-60"
+                  >
+                    {childSubmitting ? (
+                      <>
+                        <span className="animate-spin text-sm">🔄</span>
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan Profil Anak</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            MODAL EDIT DATA ANAK
+            ───────────────────────────────────────────────────────────── */}
+        {isEditChildModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 animate-fade-in">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>✏️</span> Edit Data Anak & Pengukuran
+                </h3>
+                <button
+                  onClick={() => setIsEditChildModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {childModalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {childModalError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveEditChild} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Anak <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={childFormData.name}
+                    onChange={(e) => setChildFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Tanggal Lahir <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={childFormData.dateOfBirth}
+                      onChange={(e) => setChildFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Jenis Kelamin <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={childFormData.gender}
+                      onChange={(e) => setChildFormData(prev => ({ ...prev, gender: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all bg-white"
+                    >
+                      <option value="male">👦 Laki-laki</option>
+                      <option value="female">👧 Perempuan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl space-y-3">
+                  <span className="text-xs font-bold text-amber-900 uppercase tracking-wider block">Perbarui Data Pengukuran Terakhir</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Berat Badan (kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={childFormData.weight}
+                        onChange={(e) => setChildFormData(prev => ({ ...prev, weight: e.target.value }))}
+                        placeholder="Misal: 13.0"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Tinggi Badan (cm)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={childFormData.height}
+                        onChange={(e) => setChildFormData(prev => ({ ...prev, height: e.target.value }))}
+                        placeholder="Misal: 88.5"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    *Mengubah berat & tinggi badan akan otomatis menghitung ulang Z-score WHO & status gizi anak.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditChildModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={childSubmitting}
+                    className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-60"
+                  >
+                    {childSubmitting ? (
+                      <>
+                        <span className="animate-spin text-sm">🔄</span>
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan Perubahan</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

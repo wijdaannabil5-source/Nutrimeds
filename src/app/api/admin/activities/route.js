@@ -1,5 +1,5 @@
 import { db } from '@/lib/db/index';
-import { users, children, measurements, activityLogs } from '@/lib/db/schema';
+import { users, children, measurements, activityLogs, mealPlans } from '@/lib/db/schema';
 import { count, desc } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
@@ -15,7 +15,7 @@ async function verifyAdminSession() {
 
 /**
  * GET /api/admin/activities
- * Mengambil data statistik gizi dan log aktivitas sistem.
+ * Mengambil data statistik gizi, statistik data pengisian, dan log aktivitas sistem.
  */
 export async function GET(request) {
   try {
@@ -35,6 +35,7 @@ export async function GET(request) {
     const totalChildren = db.select({ val: count() }).from(children).get()?.val || 0;
     const totalMeasurements = db.select({ val: count() }).from(measurements).get()?.val || 0;
     const totalActivities = db.select({ val: count() }).from(activityLogs).get()?.val || 0;
+    const totalMealPlans = db.select({ val: count() }).from(mealPlans).get()?.val || 0;
 
     // 2. Distribusi Status Gizi
     const measurementRows = db.select().from(measurements).all();
@@ -159,6 +160,32 @@ export async function GET(request) {
     const obesityRate = totalMeasurementsCount > 0 ? Math.round((obesityCount / totalMeasurementsCount) * 100) : 0;
     const underweightRate = totalMeasurementsCount > 0 ? Math.round((underweightCount / totalMeasurementsCount) * 100) : 0;
 
+    // 5. Hitung Statistik Data Pengisian
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    const measurementsToday = measurementRows.filter(m => new Date(m.measuredAt).getTime() >= todayStart).length;
+    const measurementsThisMonth = measurementRows.filter(m => new Date(m.measuredAt).getTime() >= monthStart).length;
+
+    const childrenToday = childrenList.filter(c => new Date(c.createdAt).getTime() >= todayStart).length;
+    const childrenThisMonth = childrenList.filter(c => new Date(c.createdAt).getTime() >= monthStart).length;
+
+    const logsToday = allActivities.filter(a => new Date(a.createdAt).getTime() >= todayStart).length;
+    const logsThisMonth = allActivities.filter(a => new Date(a.createdAt).getTime() >= monthStart).length;
+
+    const aiChatsCount = allActivities.filter(a => a.action === 'CHAT').length;
+    const calculationsCount = allActivities.filter(a => a.action === 'CALCULATE').length;
+    const pptxCount = allActivities.filter(a => a.action === 'GENERATE_PPTX').length;
+
+    const uniqueMeasuredChildrenCount = new Set(measurementRows.map(m => m.childId)).size;
+    const avgMeasurementsPerChild = totalChildren > 0 ? (totalMeasurements / totalChildren).toFixed(1) : '0';
+    const childMeasurementCoverage = totalChildren > 0 ? Math.round((uniqueMeasuredChildrenCount / totalChildren) * 100) : 0;
+
+    const totalSubmissions = totalMeasurements + totalChildren + totalMealPlans + totalActivities;
+    const submissionsToday = measurementsToday + childrenToday + logsToday;
+    const submissionsThisMonth = measurementsThisMonth + childrenThisMonth + logsThisMonth;
+
     return Response.json({
       success: true,
       data: {
@@ -167,10 +194,34 @@ export async function GET(request) {
           totalChildren,
           totalMeasurements,
           totalActivities,
+          totalMealPlans,
           health: {
             stuntingRate,
             obesityRate,
             underweightRate
+          }
+        },
+        submissionStats: {
+          totalSubmissions,
+          submissionsToday,
+          submissionsThisMonth,
+          measurementsCount: totalMeasurements,
+          measurementsToday,
+          childrenCount: totalChildren,
+          childrenToday,
+          mealPlansCount: totalMealPlans,
+          aiChatsCount,
+          calculationsCount,
+          pptxCount,
+          avgMeasurementsPerChild,
+          childMeasurementCoverage,
+          byType: {
+            'Pengukuran Gizi': totalMeasurements,
+            'Profil Anak': totalChildren,
+            'Rencana Makan': totalMealPlans,
+            'Kalkulator Mandiri': calculationsCount,
+            'Konsultasi AI': aiChatsCount,
+            'Unduh PPTX': pptxCount
           }
         },
         statusDistribution,
