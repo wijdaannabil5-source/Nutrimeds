@@ -258,6 +258,70 @@ export async function POST(request) {
     const body = await request.json();
     const { action } = body;
 
+    const real15ChildrenData = [
+      { name: 'M. Fatih', dateOfBirth: '2024-07-07', weight: 9.0, height: 81.3, gender: 'male' },
+      { name: 'M. Ali H', dateOfBirth: '2025-03-05', weight: 8.0, height: 72.0, gender: 'male' },
+      { name: 'M. Zayn Hanan A', dateOfBirth: '2025-11-08', weight: 6.8, height: 65.0, gender: 'male' },
+      { name: 'Aiswa', dateOfBirth: '2024-06-17', weight: 9.0, height: 81.0, gender: 'female' },
+      { name: 'Qayla Alesha', dateOfBirth: '2023-09-18', weight: 10.3, height: 83.0, gender: 'female' },
+      { name: 'Nashya Azra', dateOfBirth: '2023-08-10', weight: 9.0, height: 86.3, gender: 'female' },
+      { name: 'M. Kiara Awal', dateOfBirth: '2026-04-16', weight: 5.0, height: 57.0, gender: 'male' },
+      { name: 'Fathan illyas', dateOfBirth: '2024-07-05', weight: 9.5, height: 79.0, gender: 'male' },
+      { name: 'Arshaka Rizwan', dateOfBirth: '2026-01-09', weight: 5.5, height: 58.5, gender: 'male' },
+      { name: 'Fatimah Fadhila', dateOfBirth: '2026-03-16', weight: 5.0, height: 57.0, gender: 'female' },
+      { name: 'Aufa Ahda', dateOfBirth: '2025-01-03', weight: 8.0, height: 74.0, gender: 'female' },
+      { name: 'Ayra Malika', dateOfBirth: '2024-08-11', weight: 8.2, height: 78.1, gender: 'female' },
+      { name: 'Muhammad', dateOfBirth: '2025-07-26', weight: 7.0, height: 70.0, gender: 'male' },
+      { name: 'Mirelza oktavaria', dateOfBirth: '2026-03-08', weight: 5.0, height: 58.0, gender: 'female' },
+      { name: 'Nur Aulia R', dateOfBirth: '2025-10-27', weight: 6.0, height: 64.0, gender: 'female' },
+    ];
+
+    if (action === 'SEED_REAL_CHILDREN' || action === 'SIMULATE') {
+      const now = new Date();
+      let defaultUser = db.select().from(users).get();
+      if (!defaultUser) {
+        const userId = uuidv4();
+        db.insert(users).values({
+          id: userId,
+          name: 'Ibu Posyandu / Orang Tua',
+          email: 'posyandu@nutrimeds.id',
+          createdAt: now,
+          updatedAt: now,
+        }).run();
+        defaultUser = { id: userId, name: 'Ibu Posyandu / Orang Tua' };
+      }
+
+      real15ChildrenData.forEach(c => {
+        let existingChild = db.select().from(children).where(eq(children.name, c.name)).get();
+        let childId = existingChild?.id;
+        if (!existingChild) {
+          childId = uuidv4();
+          db.insert(children).values({
+            id: childId,
+            userId: defaultUser.id,
+            name: c.name,
+            dateOfBirth: c.dateOfBirth,
+            gender: c.gender,
+            createdAt: now,
+          }).run();
+        }
+
+        db.insert(measurements).values({
+          id: uuidv4(),
+          childId,
+          weight: c.weight,
+          height: c.height,
+          ageMonths: 12,
+          nutritionStatus: 'Kurang Gizi',
+          recommendedCalories: 950,
+          measuredAt: now,
+          zScoreWFA: -2.1,
+          zScoreHFA: 0.1,
+          zScoreBFA: -1.9,
+        }).run();
+      });
+    }
+
     if (action === 'SIMULATE') {
       // Data simulasi pengguna
       const dummyUsers = [
